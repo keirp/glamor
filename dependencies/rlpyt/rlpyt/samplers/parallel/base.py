@@ -35,7 +35,7 @@ class ParallelSamplerBase(BaseSampler):
             world_size=1,
             rank=0,
             worker_process=None,
-            ):
+    ):
         """
         Creates an example instance of the environment for agent initialization
         (which may differ by sub-class) and to pre-allocate batch buffers, then deletes
@@ -47,7 +47,7 @@ class ParallelSamplerBase(BaseSampler):
         and collector objects.  Waits for the worker process to complete all initialization
         (such as decorrelating environment states) before returning.  Barriers and other
         parallel indicators are constructed to manage worker processes.
-        
+
         .. warning::
             If doing offline agent evaluation, will use at least one evaluation environment
             instance per parallel worker, which might increase the total
@@ -70,11 +70,12 @@ class ParallelSamplerBase(BaseSampler):
             self.eval_n_envs_per = max(1, self.eval_n_envs // n_worker)
             self.eval_n_envs = eval_n_envs = self.eval_n_envs_per * n_worker
             logger.log(f"Total parallel evaluation envs: {eval_n_envs}.")
-            self.eval_max_T = eval_max_T = int(self.eval_max_steps // eval_n_envs)
+            self.eval_max_T = eval_max_T = int(
+                self.eval_max_steps // eval_n_envs)
 
         env = self.EnvCls(**self.env_kwargs)
         self._agent_init(agent, env, global_B=global_B,
-            env_ranks=env_ranks)
+                         env_ranks=env_ranks)
         examples = self._build_buffers(env, bootstrap_value)
         env.close()
         del env
@@ -83,19 +84,22 @@ class ParallelSamplerBase(BaseSampler):
 
         if traj_info_kwargs:
             for k, v in traj_info_kwargs.items():
-                setattr(self.TrajInfoCls, "_" + k, v)  # Avoid passing every init.
+                # Avoid passing every init.
+                setattr(self.TrajInfoCls, "_" + k, v)
 
         common_kwargs = self._assemble_common_kwargs(affinity, global_B)
-        workers_kwargs = self._assemble_workers_kwargs(affinity, seed, n_envs_list)
+        workers_kwargs = self._assemble_workers_kwargs(
+            affinity, seed, n_envs_list)
 
         target = sampling_process if worker_process is None else worker_process
         self.workers = [mp.Process(target=target,
-            kwargs=dict(common_kwargs=common_kwargs, worker_kwargs=w_kwargs))
-            for w_kwargs in workers_kwargs]
+                                   kwargs=dict(common_kwargs=common_kwargs, worker_kwargs=w_kwargs))
+                        for w_kwargs in workers_kwargs]
         for w in self.workers:
             w.start()
 
-        self.ctrl.barrier_out.wait()  # Wait for workers ready (e.g. decorrelate).
+        # Wait for workers ready (e.g. decorrelate).
+        self.ctrl.barrier_out.wait()
         return examples  # e.g. In case useful to build replay buffer.
 
     def obtain_samples(self, itr):
@@ -128,19 +132,19 @@ class ParallelSamplerBase(BaseSampler):
             while True:
                 time.sleep(EVAL_TRAJ_CHECK)
                 traj_infos.extend(drain_queue(self.eval_traj_infos_queue,
-                    guard_sentinel=True))
+                                              guard_sentinel=True))
                 if len(traj_infos) >= self.eval_max_trajectories:
                     self.sync.stop_eval.value = True
                     logger.log("Evaluation reached max num trajectories "
-                        f"({self.eval_max_trajectories}).")
+                               f"({self.eval_max_trajectories}).")
                     break  # Stop possibly before workers reach max_T.
                 if self.ctrl.barrier_out.parties - self.ctrl.barrier_out.n_waiting == 1:
                     logger.log("Evaluation reached max num time steps "
-                        f"({self.eval_max_T}).")
+                               f"({self.eval_max_T}).")
                     break  # Workers reached max_T.
         self.ctrl.barrier_out.wait()
         traj_infos.extend(drain_queue(self.eval_traj_infos_queue,
-            n_sentinel=self.n_worker))
+                                      n_sentinel=self.n_worker))
         self.ctrl.do_eval.value = False
         return traj_infos
 
@@ -156,24 +160,25 @@ class ParallelSamplerBase(BaseSampler):
 
     def _get_n_envs_list(self, affinity=None, n_worker=None, B=None):
         B = self.batch_spec.B if B is None else B
-        n_worker = len(affinity["workers_cpus"]) if n_worker is None else n_worker
+        n_worker = len(affinity["workers_cpus"]
+                       ) if n_worker is None else n_worker
         if B < n_worker:
             logger.log(f"WARNING: requested fewer envs ({B}) than available worker "
-                f"processes ({n_worker}). Using fewer workers (but maybe better to "
-                "increase sampler's `batch_B`.")
+                       f"processes ({n_worker}). Using fewer workers (but maybe better to "
+                       "increase sampler's `batch_B`.")
             n_worker = B
         n_envs_list = [B // n_worker] * n_worker
         if not B % n_worker == 0:
             logger.log("WARNING: unequal number of envs per process, from "
-                f"batch_B {self.batch_spec.B} and n_worker {n_worker} "
-                "(possible suboptimal speed).")
+                       f"batch_B {self.batch_spec.B} and n_worker {n_worker} "
+                       "(possible suboptimal speed).")
             for b in range(B % n_worker):
                 n_envs_list[b] += 1
         return n_envs_list
 
     def _agent_init(self, agent, env, global_B=1, env_ranks=None):
         agent.initialize(env.spaces, share_memory=True,
-            global_B=global_B, env_ranks=env_ranks)
+                         global_B=global_B, env_ranks=env_ranks)
         self.agent = agent
 
     def _build_buffers(self, env, bootstrap_value):
@@ -215,7 +220,7 @@ class ParallelSamplerBase(BaseSampler):
                 eval_env_kwargs=self.eval_env_kwargs,
                 eval_max_T=self.eval_max_T,
                 eval_traj_infos_queue=self.eval_traj_infos_queue,
-                )
+            )
             )
         return common_kwargs
 
@@ -232,7 +237,7 @@ class ParallelSamplerBase(BaseSampler):
                 env_ranks=env_ranks,
                 seed=seed + rank,
                 cpus=(affinity["workers_cpus"][rank]
-                    if affinity.get("set_affinity", True) else None),
+                      if affinity.get("set_affinity", True) else None),
                 n_envs=n_envs,
                 samples_np=self.samples_np[:, slice_B],
                 sync=self.sync,  # Only for eval, on CPU.

@@ -10,7 +10,8 @@ class UniformSequenceReplay:
     """
 
     def set_batch_T(self, batch_T):
-        self.batch_T = batch_T  # Can set dynamically, or input to sample_batch.
+        # Can set dynamically, or input to sample_batch.
+        self.batch_T = batch_T
 
     def sample_batch(self, batch_B, batch_T=None):
         """Can dynamically input length of sequences to return, by ``batch_T``,
@@ -34,16 +35,17 @@ class UniformSequenceReplay:
         T_idxs = np.random.randint(low=0, high=high, size=(batch_B,))
         T_idxs[T_idxs >= t - b] += min(t, b) + f
         if self.rnn_state_interval > 0:  # Some rnn states stored; only sample those.
-            T_idxs = (T_idxs // self.rnn_state_interval) * self.rnn_state_interval
+            T_idxs = (T_idxs // self.rnn_state_interval) * \
+                self.rnn_state_interval
         B_idxs = np.random.randint(low=0, high=self.B, size=(batch_B,))
         return T_idxs, B_idxs
 
 
 class UniformSequenceReplayBuffer(UniformSequenceReplay,
-        SequenceNStepReturnBuffer):
+                                  SequenceNStepReturnBuffer):
     pass
 
 
 class AsyncUniformSequenceReplayBuffer(AsyncReplayBufferMixin,
-        UniformSequenceReplayBuffer):
+                                       UniformSequenceReplayBuffer):
     pass

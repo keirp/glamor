@@ -15,7 +15,7 @@ runs_per_setting = 2
 experiment_title = "atari_dqn_basic_cpusamp_1of2"
 variant_levels = list()
 
-games = ["pong", "seaquest"] #, "qbert", "chopper_command"]
+games = ["pong", "seaquest"]  # , "qbert", "chopper_command"]
 values = list(zip(games))
 dir_names = ["{}".format(*v) for v in values]
 keys = [("env", "game")]

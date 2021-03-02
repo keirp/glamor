@@ -16,17 +16,17 @@ from rlpyt.utils.buffer import buffer_to, buffer_method
 from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.misc import iterate_mb_idxs
 from rlpyt.algos.utils import (discount_return,
-    generalized_advantage_estimation, valid_from_done)
+                               generalized_advantage_estimation, valid_from_done)
 from rlpyt.models.utils import strip_ddp_state_dict
 
 OptInfoCost = namedtuple("OptInfoCost", OptInfo._fields + ("costPenalty",
-    "costLimit", "valueError", "cvalueError", "valueAbsError", "cvalueAbsError",
-    "pid_i", "pid_p", "pid_d", "pid_o", "betaKL", "betaKlRaw", "betaKlR",
-    "betaKlC", "betaGradRaw", "betaGrad"))
+                                                           "costLimit", "valueError", "cvalueError", "valueAbsError", "cvalueAbsError",
+                                                           "pid_i", "pid_p", "pid_d", "pid_o", "betaKL", "betaKlRaw", "betaKlR",
+                                                           "betaKlC", "betaGradRaw", "betaGrad"))
 
 LossInputs = namedarraytuple("LossInputs",
-    ["agent_inputs", "action", "return_", "advantage", "valid", "old_dist_info",
-    "c_return", "c_advantage"])
+                             ["agent_inputs", "action", "return_", "advantage", "valid", "old_dist_info",
+                              "c_return", "c_advantage"])
 
 
 class CppoPID(PolicyGradientAlgo):
@@ -80,16 +80,17 @@ class CppoPID(PolicyGradientAlgo):
             reward_scale=1,  # multiplicative (unlike cost_scale)
             lagrange_quadratic_penalty=False,
             quadratic_penalty_coeff=1,
-            ):
+    ):
         assert learn_c_value or not objective_penalized
-        assert (step_cost_limit_steps is None) == (step_cost_limit_value is None)
+        assert (step_cost_limit_steps is None) == (
+            step_cost_limit_value is None)
         assert not (sum_norm and diff_norm)
         assert not (use_beta_kl and use_beta_grad)
         cost_discount = discount if cost_discount is None else cost_discount
         cost_gae_lambda = (gae_lambda if cost_gae_lambda is None else
-            cost_gae_lambda)
+                           cost_gae_lambda)
         cost_value_loss_coeff = (value_loss_coeff if cost_value_loss_coeff is
-            None else cost_value_loss_coeff)
+                                 None else cost_value_loss_coeff)
         if optim_kwargs is None:
             optim_kwargs = dict()
         save__init__args(locals())
@@ -102,7 +103,8 @@ class CppoPID(PolicyGradientAlgo):
 
     def initialize(self, *args, **kwargs):
         super().initialize(*args, **kwargs)
-        self._batch_size = self.batch_spec.size // self.minibatches  # For logging.
+        # For logging.
+        self._batch_size = self.batch_spec.size // self.minibatches
         if self.linear_lr_schedule:
             self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
                 optimizer=self.optimizer,
@@ -112,7 +114,7 @@ class CppoPID(PolicyGradientAlgo):
             self.step_cost_limit_itr = None
         else:
             self.step_cost_limit_itr = int(self.step_cost_limit_steps //
-                (self.batch_spec.size * self.world_size))
+                                           (self.batch_spec.size * self.world_size))
             # print("\n\n step cost itr: ", self.step_cost_limit_itr, "\n\n")
         self._ep_cost_ema = self.cost_limit  # No derivative at start.
         self._ddp = self.agent._ddp
@@ -170,7 +172,7 @@ class CppoPID(PolicyGradientAlgo):
         self._cost_d += (1 - a_d) * float(ep_cost_avg)
         pid_d = max(0., self._cost_d - self.cost_ds[0])
         pid_o = (self.pid_Kp * self._delta_p + self.pid_i +
-            self.pid_Kd * pid_d)
+                 self.pid_Kd * pid_d)
         self.cost_penalty = max(0., pid_o)
         if self.diff_norm:
             self.cost_penalty = min(1., self.cost_penalty)
@@ -238,18 +240,21 @@ class CppoPID(PolicyGradientAlgo):
                 opt_info.perplexity.append(perplexity.item())
                 opt_info.valueError.extend(value_errors[0][::10].numpy())
                 opt_info.cvalueError.extend(value_errors[1][::10].numpy())
-                opt_info.valueAbsError.extend(abs_value_errors[0][::10].numpy())
-                opt_info.cvalueAbsError.extend(abs_value_errors[1][::10].numpy())
+                opt_info.valueAbsError.extend(
+                    abs_value_errors[0][::10].numpy())
+                opt_info.cvalueAbsError.extend(
+                    abs_value_errors[1][::10].numpy())
 
                 self.update_counter += 1
         if self.linear_lr_schedule:
             self.lr_scheduler.step()
-            self.ratio_clip = self._ratio_clip * (self.n_itr - itr) / self.n_itr
+            self.ratio_clip = self._ratio_clip * \
+                (self.n_itr - itr) / self.n_itr
 
         return opt_info
 
     def loss(self, agent_inputs, action, return_, advantage, valid, old_dist_info,
-            c_return, c_advantage, init_rnn_state=None):
+             c_return, c_advantage, init_rnn_state=None):
         if init_rnn_state is not None:
             # [B,N,H] --> [N,B,H] (for cudnn).
             init_rnn_state = buffer_method(init_rnn_state, "transpose", 0, 1)
@@ -260,10 +265,10 @@ class CppoPID(PolicyGradientAlgo):
         dist = self.agent.distribution
 
         ratio = dist.likelihood_ratio(action, old_dist_info=old_dist_info,
-            new_dist_info=dist_info)
+                                      new_dist_info=dist_info)
         surr_1 = ratio * advantage
         clipped_ratio = torch.clamp(ratio, 1. - self.ratio_clip,
-            1. + self.ratio_clip)
+                                    1. + self.ratio_clip)
         surr_2 = clipped_ratio * advantage
         surrogate = torch.min(surr_1, surr_2)
         pi_loss = - valid_mean(surrogate, valid)
@@ -271,7 +276,8 @@ class CppoPID(PolicyGradientAlgo):
         if self.reward_scale == 1.:
             value_error = value.value - return_
         else:
-            value_error = value.value - (return_ / self.reward_scale)  # Undo the scaling
+            value_error = value.value - \
+                (return_ / self.reward_scale)  # Undo the scaling
         value_se = 0.5 * value_error ** 2
         value_loss = self.value_loss_coeff * valid_mean(value_se, valid)
         # Hmm, but with reward scaling, now the value gradient will be relatively smaller
@@ -301,8 +307,8 @@ class CppoPID(PolicyGradientAlgo):
 
             if self.lagrange_quadratic_penalty:
                 quad_loss = (self.quadratic_penalty_coeff
-                    * valid_mean(c_surrogate, valid)
-                    * torch.max(torch.tensor(0.), self._ep_cost_ema - self.cost_limit))
+                             * valid_mean(c_surrogate, valid)
+                             * torch.max(torch.tensor(0.), self._ep_cost_ema - self.cost_limit))
                 pi_loss += quad_loss
 
         loss = pi_loss + value_loss + entropy_loss
@@ -343,7 +349,7 @@ class CppoPID(PolicyGradientAlgo):
         if c_value is not None:  # Learning c_value, even if reward penalized.
             if self.cost_gae_lambda == 1:  # GAE reduces to empirical discount.
                 c_return = discount_return(cost, done, c_bv,
-                    self.cost_discount)
+                                           self.cost_discount)
                 c_advantage = c_return - c_value
             else:
                 c_advantage, c_return = generalized_advantage_estimation(
@@ -360,12 +366,13 @@ class CppoPID(PolicyGradientAlgo):
                 reward, value, done, bv, self.discount, self.gae_lambda)
 
         if not self.mid_batch_reset or self.agent.recurrent:
-            valid = valid_from_done(done)  # Recurrent: no reset during training.
+            # Recurrent: no reset during training.
+            valid = valid_from_done(done)
             # "done" might stay True until env resets next batch.
             # Could probably do this formula directly on (1 - done) and use it
             # regardless of mid_batch_reset.
             ep_cost_mask = valid * (1 - torch.cat([valid[1:],
-                torch.ones_like(valid[-1:])]))  # Find where valid turns OFF.
+                                                   torch.ones_like(valid[-1:])]))  # Find where valid turns OFF.
         else:
             valid = None  # OR: torch.ones_like(done)
             ep_cost_mask = done  # Everywhere a done, is episode final cost.
@@ -421,10 +428,10 @@ class CppoPID(PolicyGradientAlgo):
             c_advantage[:] = (c_advantage - cadv_mean) / max(cadv_std, 1e-6)
 
         return (return_, advantage, valid, c_return, c_advantage,
-            self._ep_cost_ema)
+                self._ep_cost_ema)
 
     def compute_beta_kl(self, loss_inputs, init_rnn_state,
-            batch_size, mb_size, T):
+                        batch_size, mb_size, T):
         """Ratio of KL divergences from reward-only vs cost-only updates."""
         self.agent.beta_r_model.load_state_dict(strip_ddp_state_dict(
             self.agent.model.state_dict()))
@@ -436,7 +443,7 @@ class CppoPID(PolicyGradientAlgo):
         recurrent = self.agent.recurrent
         for _ in range(self.beta_kl_epochs):
             for idxs in iterate_mb_idxs(batch_size, mb_size,
-                    shuffle=batch_size > mb_size):
+                                        shuffle=batch_size > mb_size):
                 T_idxs = slice(None) if recurrent else idxs % T
                 B_idxs = idxs if recurrent else idxs // T
                 rnn_state = init_rnn_state[B_idxs] if recurrent else None
@@ -470,9 +477,9 @@ class CppoPID(PolicyGradientAlgo):
 
         dist = self.agent.distribution
         beta_r_KL = dist.mean_kl(new_dist_info=r_dist_info,
-            old_dist_info=loss_inputs.old_dist_info, valid=loss_inputs.valid)
+                                 old_dist_info=loss_inputs.old_dist_info, valid=loss_inputs.valid)
         beta_c_KL = dist.mean_kl(new_dist_info=c_dist_info,
-            old_dist_info=loss_inputs.old_dist_info, valid=loss_inputs.valid)
+                                 old_dist_info=loss_inputs.old_dist_info, valid=loss_inputs.valid)
 
         if self._ddp:
             beta_KLs = torch.stack([beta_r_KL, beta_c_KL])
@@ -487,7 +494,7 @@ class CppoPID(PolicyGradientAlgo):
         return raw_beta_KL, float(beta_r_KL), float(beta_c_KL)
 
     def beta_kl_losses(self, agent_inputs, action, return_, advantage, valid,
-            old_dist_info, c_return, c_advantage, init_rnn_state=None):
+                       old_dist_info, c_return, c_advantage, init_rnn_state=None):
         if init_rnn_state is not None:
             # [B,N,H] --> [N,B,H] (for cudnn).
             init_rnn_state = buffer_method(init_rnn_state, "transpose", 0, 1)
@@ -500,19 +507,19 @@ class CppoPID(PolicyGradientAlgo):
         dist = self.agent.distribution
 
         r_ratio = dist.likelihood_ratio(action, old_dist_info=old_dist_info,
-            new_dist_info=r_dist_info)
+                                        new_dist_info=r_dist_info)
         surr_1 = r_ratio * advantage
         r_clipped_ratio = torch.clamp(r_ratio, 1. - self.ratio_clip,
-            1. + self.ratio_clip)
+                                      1. + self.ratio_clip)
         surr_2 = r_clipped_ratio * advantage
         surrogate = torch.min(surr_1, surr_2)
         beta_r_loss = - valid_mean(surrogate, valid)
 
         c_ratio = dist.likelihood_ratio(action, old_dist_info=old_dist_info,
-            new_dist_info=c_dist_info)
+                                        new_dist_info=c_dist_info)
         c_surr_1 = c_ratio * c_advantage
         c_clipped_ratio = torch.clamp(c_ratio, 1. - self.ratio_clip,
-            1. + self.ratio_clip)
+                                      1. + self.ratio_clip)
         c_surr_2 = c_clipped_ratio * c_advantage
         c_surrogate = torch.max(c_surr_1, c_surr_2)
         beta_c_loss = valid_mean(c_surrogate, valid)
@@ -543,7 +550,7 @@ class CppoPID(PolicyGradientAlgo):
         return float(r_grad_norm) / float(c_grad_norm)
 
     def beta_grad_losses(self, agent_inputs, action, return_, advantage, valid,
-            old_dist_info, c_return, c_advantage, init_rnn_state=None):
+                         old_dist_info, c_return, c_advantage, init_rnn_state=None):
         if init_rnn_state is not None:
             # [B,N,H] --> [N,B,H] (for cudnn).
             init_rnn_state = buffer_method(init_rnn_state, "transpose", 0, 1)
@@ -554,10 +561,10 @@ class CppoPID(PolicyGradientAlgo):
         dist = self.agent.distribution
 
         ratio = dist.likelihood_ratio(action, old_dist_info=old_dist_info,
-            new_dist_info=dist_info)
+                                      new_dist_info=dist_info)
         surr_1 = ratio * advantage
         clipped_ratio = torch.clamp(ratio, 1. - self.ratio_clip,
-            1. + self.ratio_clip)
+                                    1. + self.ratio_clip)
         surr_2 = clipped_ratio * advantage
         surrogate = torch.min(surr_1, surr_2)
         r_loss = - valid_mean(surrogate, valid)

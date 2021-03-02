@@ -15,6 +15,7 @@ class MujocoLstmModel(torch.nn.Module):
     Recurrent model for Mujoco locomotion agents: an MLP into an LSTM which
     outputs distribution means, log_std, and state-value estimate.
     """
+
     def __init__(
             self,
             observation_shape,
@@ -25,7 +26,7 @@ class MujocoLstmModel(torch.nn.Module):
             normalize_observation=False,
             norm_obs_clip=10,
             norm_obs_var_clip=1e-6,
-            ):
+    ):
         super().__init__()
         self._obs_n_dim = len(observation_shape)
         self._action_size = action_size
@@ -46,8 +47,6 @@ class MujocoLstmModel(torch.nn.Module):
             self.norm_obs_var_clip = norm_obs_var_clip
         self.normalize_observation = normalize_observation
 
-
-
     def forward(self, observation, prev_action, prev_reward, init_rnn_state):
         """
         Compute mean, log_std, and value estimate from input state. Infer
@@ -65,15 +64,16 @@ class MujocoLstmModel(torch.nn.Module):
             if self.norm_obs_var_clip is not None:
                 obs_var = torch.clamp(obs_var, min=self.norm_obs_var_clip)
             observation = torch.clamp((observation - self.obs_rms.mean) /
-                obs_var.sqrt(), -self.norm_obs_clip, self.norm_obs_clip)
+                                      obs_var.sqrt(), -self.norm_obs_clip, self.norm_obs_clip)
 
         mlp_out = self.mlp(observation.view(T * B, -1))
         lstm_input = torch.cat([
             mlp_out.view(T, B, -1),
             prev_action.view(T, B, -1),
             prev_reward.view(T, B, 1),
-            ], dim=2)
-        init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
+        ], dim=2)
+        init_rnn_state = None if init_rnn_state is None else tuple(
+            init_rnn_state)
         lstm_out, (hn, cn) = self.lstm(lstm_input, init_rnn_state)
         outputs = self.head(lstm_out.view(T * B, -1))
         mu = outputs[:, :self._action_size]

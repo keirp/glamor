@@ -1,8 +1,8 @@
 
 from rlpyt.samplers.parallel.cpu.collectors import (CpuResetCollector,
-    CpuWaitResetCollector)
+                                                    CpuWaitResetCollector)
 from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector,
-    GpuWaitResetCollector)
+                                                    GpuWaitResetCollector)
 
 
 class DoubleBufferCollectorMixin:

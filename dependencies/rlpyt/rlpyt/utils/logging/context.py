@@ -17,7 +17,8 @@ def get_log_dir(experiment_name, root_log_dir=None, date=True):
     yyyymmdd_hhmmss = datetime.datetime.today().strftime("%Y%m%d-%H%M%S")
     yyyymmdd, hhmmss = yyyymmdd_hhmmss.split("-")
     root_log_dir = LOG_DIR if root_log_dir is None else root_log_dir
-    log_dir = osp.join(root_log_dir, "local", yyyymmdd, hhmmss, experiment_name)
+    log_dir = osp.join(root_log_dir, "local", yyyymmdd,
+                       hhmmss, experiment_name)
     return log_dir
 
 
@@ -56,7 +57,7 @@ def logger_context(
     exp_dir = osp.abspath(log_dir)
     if LOG_DIR != osp.commonpath([exp_dir, LOG_DIR]) and not override_prefix:
         print(f"logger_context received log_dir outside of {LOG_DIR}: "
-            f"prepending by {LOG_DIR}/local/<yyyymmdd>/<hhmmss>/")
+              f"prepending by {LOG_DIR}/local/<yyyymmdd>/<hhmmss>/")
         exp_dir = get_log_dir(log_dir)
     tabular_log_file = osp.join(exp_dir, "progress.csv")
     text_log_file = osp.join(exp_dir, "debug.log")
@@ -101,7 +102,7 @@ def add_exp_param(param_name, param_val, exp_dir=None, overwrite=False):
                             param_name, params[param_name], param_val))
                     else:
                         print("Param {} already found & overwrite set to False; "
-                            "leaving old val: {}.".format(param_name, params[param_name]))
+                              "leaving old val: {}.".format(param_name, params[param_name]))
                         update_param = False
             if update_param:
                 os.remove(params_f)

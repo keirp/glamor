@@ -15,7 +15,7 @@ def log_exps_tree(exp_dir, log_dirs, runs_per_setting):
     with open(osp.join(exp_dir, "experiments_tree.txt"), "w") as f:
         f.write(f"Experiment manager process ID: {os.getpid()}.\n")
         f.write("Number of settings (experiments) to run: "
-            f"{len(log_dirs)}  ({runs_per_setting * len(log_dirs)}).\n\n")
+                f"{len(log_dirs)}  ({runs_per_setting * len(log_dirs)}).\n\n")
         [f.write(log_dir + "\n") for log_dir in log_dirs]
 
 
@@ -25,16 +25,16 @@ def log_num_launched(exp_dir, n, total):
 
 
 def launch_experiment(
-        script,
-        run_slot,
-        affinity_code,
-        log_dir,
-        variant,
-        run_ID,
-        args,
-        python_executable=None,
-        set_egl_device=False,
-    ):
+    script,
+    run_slot,
+    affinity_code,
+    log_dir,
+    variant,
+    run_ID,
+    args,
+    python_executable=None,
+    set_egl_device=False,
+):
     """Launches one learning run using ``subprocess.Popen()`` to call the
     python script.  Calls the script as:
     ``python {script} {slot_affinity_code} {log_dir} {run_ID} {*args}``
@@ -43,7 +43,7 @@ def launch_experiment(
     with ``tasket -c ..`` and the listed cpus (this is the most sure way to
     keep the run limited to these CPU cores).  Also saves the `variant` file.
     Returns the process handle, which can be monitored.
-   
+
     Use ``set_egl_device=True`` to set an environment variable
     ``EGL_DEVICE_ID`` equal to the same value as the cuda index for the
     algorithm.  For example, can use with DMControl environment modified
@@ -60,7 +60,8 @@ def launch_experiment(
     else:
         cpus = ()
     if cpus:
-        call_list += ["taskset", "-c", cpus]  # PyTorch obeys better than just psutil.
+        # PyTorch obeys better than just psutil.
+        call_list += ["taskset", "-c", cpus]
     py = python_executable if python_executable else sys.executable or "python"
     call_list += [py, script, slot_affinity_code, log_dir, str(run_ID)]
     call_list += [str(a) for a in args]
@@ -78,8 +79,8 @@ def launch_experiment(
 
 
 def run_experiments(script, affinity_code, experiment_title, runs_per_setting,
-        variants, log_dirs, common_args=None, runs_args=None,
-        set_egl_device=False):
+                    variants, log_dirs, common_args=None, runs_args=None,
+                    set_egl_device=False):
     """Call in a script to run a set of experiments locally on a machine.  Uses
     the ``launch_experiment()`` function for each individual run, which is a 
     call to the ``script`` file.  The number of experiments to run at the same

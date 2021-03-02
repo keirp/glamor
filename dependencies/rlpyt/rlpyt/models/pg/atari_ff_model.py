@@ -22,7 +22,7 @@ class AtariFfModel(torch.nn.Module):
             kernel_sizes=None,
             strides=None,
             paddings=None,
-            ):
+    ):
         """Instantiate neural net module according to inputs."""
         super().__init__()
         self.conv = Conv2dHeadModel(

@@ -73,7 +73,8 @@ class SyncRlMixin:
         if self.seed is None:
             self.seed = make_seed()
         port = find_port(offset=self.affinity.get("master_cpus", [0])[0])
-        backend = "gloo" if self.affinity.get("cuda_idx", None) is None else "nccl"
+        backend = "gloo" if self.affinity.get(
+            "cuda_idx", None) is None else "nccl"
         workers_kwargs = [dict(
             algo=self.algo,
             agent=self.agent,
@@ -87,7 +88,7 @@ class SyncRlMixin:
             port=port,
             backend=backend,
             par=par,
-            )
+        )
             for rank in range(1, world_size)]
         workers = [self.WorkerCls(**w_kwargs) for w_kwargs in workers_kwargs]
         self.workers = [mp.Process(target=w.train, args=()) for w in workers]
@@ -161,7 +162,7 @@ class SyncWorkerMixin:
             port,
             backend,
             par,
-            ):
+    ):
         save__init__args(locals())
 
     def startup(self):

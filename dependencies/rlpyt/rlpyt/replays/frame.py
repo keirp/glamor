@@ -29,18 +29,19 @@ class FrameBufferMixin:
         global BufferSamples
         BufferSamples = namedarraytuple("BufferSamples", field_names)
         buffer_example = BufferSamples(*(v for k, v in example.items()
-            if k != "observation"))
+                                         if k != "observation"))
         super().__init__(example=buffer_example, **kwargs)
         # Equivalent to image.shape[0] if observation is image array (C,H,W):
         self.n_frames = n_frames = get_leading_dims(example.observation,
-            n_dim=1)[0]
+                                                    n_dim=1)[0]
         logger.log(f"Frame-based buffer using {n_frames}-frame sequences.")
         # frames: oldest stored at t; duplicate n_frames - 1 beginning & end.
         self.samples_frames = buffer_from_example(example.observation[0],
-            (self.T + n_frames - 1, self.B),
-            share_memory=self.async_)  # [T+n_frames-1,B,H,W]
+                                                  (self.T + n_frames - 1, self.B),
+                                                  share_memory=self.async_)  # [T+n_frames-1,B,H,W]
         # new_frames: shifted so newest stored at t; no duplication.
-        self.samples_new_frames = self.samples_frames[n_frames - 1:]  # [T,B,H,W]
+        # [T,B,H,W]
+        self.samples_new_frames = self.samples_frames[n_frames - 1:]
         self.off_forward = max(self.off_forward, n_frames - 1)
 
     def append_samples(self, samples):
@@ -48,7 +49,7 @@ class FrameBufferMixin:
         Only the new frame in each observation is recorded."""
         t, fm1 = self.t, self.n_frames - 1
         buffer_samples = BufferSamples(*(v for k, v in samples.items()
-            if k != "observation"))
+                                         if k != "observation"))
         T, idxs = super().append_samples(buffer_samples)
         self.samples_new_frames[idxs] = samples.observation[:, :, -1]
         if t == 0:  # Starting: write early frames

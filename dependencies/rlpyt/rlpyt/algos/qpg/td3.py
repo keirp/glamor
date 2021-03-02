@@ -19,7 +19,7 @@ class TD3(DDPG):
             mu_learning_rate=1e-3,
             q_learning_rate=1e-3,
             **kwargs
-            ):
+    ):
         """Saved input arguments."""
         super().__init__(**kwargs)
         self._batch_size = batch_size

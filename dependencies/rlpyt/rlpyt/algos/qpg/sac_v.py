@@ -7,9 +7,9 @@ from rlpyt.algos.base import RlAlgorithm
 from rlpyt.utils.quick_args import save__init__args
 from rlpyt.utils.logging import logger
 from rlpyt.replays.non_sequence.uniform import (UniformReplayBuffer,
-    AsyncUniformReplayBuffer)
+                                                AsyncUniformReplayBuffer)
 from rlpyt.replays.non_sequence.time_limit import (TlUniformReplayBuffer,
-    AsyncTlUniformReplayBuffer)
+                                                   AsyncTlUniformReplayBuffer)
 from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.buffer import buffer_to
 from rlpyt.distributions.gaussian import Gaussian
@@ -19,11 +19,11 @@ from rlpyt.algos.utils import valid_from_done
 
 
 OptInfo = namedtuple("OptInfo",
-    ["q1Loss", "q2Loss", "vLoss", "piLoss",
-    "q1GradNorm", "q2GradNorm", "vGradNorm", "piGradNorm",
-    "q1", "q2", "v", "piMu", "piLogStd", "qMeanDiff"])
+                     ["q1Loss", "q2Loss", "vLoss", "piLoss",
+                      "q1GradNorm", "q2GradNorm", "vGradNorm", "piGradNorm",
+                      "q1", "q2", "v", "piMu", "piLogStd", "qMeanDiff"])
 SamplesToBuffer = namedarraytuple("SamplesToBuffer",
-    ["observation", "action", "reward", "done", "timeout"])
+                                  ["observation", "action", "reward", "done", "timeout"])
 
 
 class SAC_V(RlAlgorithm):
@@ -52,8 +52,8 @@ class SAC_V(RlAlgorithm):
             n_step_return=1,
             updates_per_sync=1,  # For async mode only.
             bootstrap_timelimit=True,
-            ReplayBufferCls=None,  #  Leave None to select by above options.
-            ):
+            ReplayBufferCls=None,  # Leave None to select by above options.
+    ):
         if optim_kwargs is None:
             optim_kwargs = dict()
         assert action_prior in ["uniform", "gaussian"]
@@ -62,25 +62,25 @@ class SAC_V(RlAlgorithm):
         save__init__args(locals())
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples,
-            world_size=1, rank=0):
+                   world_size=1, rank=0):
         """Used in basic or synchronous multi-GPU runners, not async."""
         self.agent = agent
         self.n_itr = n_itr
         self.mid_batch_reset = mid_batch_reset
         self.sampler_bs = sampler_bs = batch_spec.size
         self.updates_per_optimize = int(self.replay_ratio * sampler_bs /
-            self.batch_size)
+                                        self.batch_size)
         logger.log(f"From sampler batch size {sampler_bs}, training "
-            f"batch size {self.batch_size}, and replay ratio "
-            f"{self.replay_ratio}, computed {self.updates_per_optimize} "
-            f"updates per iteration.")
+                   f"batch size {self.batch_size}, and replay ratio "
+                   f"{self.replay_ratio}, computed {self.updates_per_optimize} "
+                   f"updates per iteration.")
         self.min_itr_learn = self.min_steps_learn // sampler_bs
         agent.give_min_itr_learn(self.min_itr_learn)
         self.initialize_replay_buffer(examples, batch_spec)
         self.optim_initialize(rank)
 
     def async_initialize(self, agent, sampler_n_itr, batch_spec, mid_batch_reset,
-            examples, world_size=1):
+                         examples, world_size=1):
         """Used in async runner only."""
         self.agent = agent
         self.n_itr = sampler_n_itr
@@ -96,13 +96,13 @@ class SAC_V(RlAlgorithm):
         """Called by async runner."""
         self.rank = rank
         self.pi_optimizer = self.OptimCls(self.agent.pi_parameters(),
-            lr=self.learning_rate, **self.optim_kwargs)
+                                          lr=self.learning_rate, **self.optim_kwargs)
         self.q1_optimizer = self.OptimCls(self.agent.q1_parameters(),
-            lr=self.learning_rate, **self.optim_kwargs)
+                                          lr=self.learning_rate, **self.optim_kwargs)
         self.q2_optimizer = self.OptimCls(self.agent.q2_parameters(),
-            lr=self.learning_rate, **self.optim_kwargs)
+                                          lr=self.learning_rate, **self.optim_kwargs)
         self.v_optimizer = self.OptimCls(self.agent.v_parameters(),
-            lr=self.learning_rate, **self.optim_kwargs)
+                                         lr=self.learning_rate, **self.optim_kwargs)
         if self.initial_optim_state_dict is not None:
             self.load_optim_state_dict(self.initial_optim_state_dict)
         if self.action_prior == "gaussian":
@@ -130,13 +130,13 @@ class SAC_V(RlAlgorithm):
         if self.ReplayBufferCls is not None:
             ReplayCls = self.ReplayBufferCls
             logger.log(f"WARNING: ignoring internal selection logic and using"
-                f" input replay buffer class: {ReplayCls} -- compatibility not"
-                " guaranteed.")
+                       f" input replay buffer class: {ReplayCls} -- compatibility not"
+                       " guaranteed.")
         self.replay_buffer = ReplayCls(**replay_kwargs)
 
-
     def optimize_agent(self, itr, samples=None, sampler_itr=None):
-        itr = itr if sampler_itr is None else sampler_itr  # Async uses sampler_itr.
+        # Async uses sampler_itr.
+        itr = itr if sampler_itr is None else sampler_itr
         if samples is not None:
             samples_to_buffer = self.samples_to_buffer(samples)
             self.replay_buffer.append_samples(samples_to_buffer)
@@ -144,36 +144,38 @@ class SAC_V(RlAlgorithm):
         if itr < self.min_itr_learn:
             return opt_info
         for _ in range(self.updates_per_optimize):
-            samples_from_replay = self.replay_buffer.sample_batch(self.batch_size)
+            samples_from_replay = self.replay_buffer.sample_batch(
+                self.batch_size)
             losses, values = self.loss(samples_from_replay)
             q1_loss, q2_loss, v_loss, pi_loss = losses
 
             self.v_optimizer.zero_grad()
             v_loss.backward()
             v_grad_norm = torch.nn.utils.clip_grad_norm_(self.agent.v_parameters(),
-                self.clip_grad_norm)
+                                                         self.clip_grad_norm)
             self.v_optimizer.step()
 
             self.pi_optimizer.zero_grad()
             pi_loss.backward()
             pi_grad_norm = torch.nn.utils.clip_grad_norm_(self.agent.pi_parameters(),
-                self.clip_grad_norm)
+                                                          self.clip_grad_norm)
             self.pi_optimizer.step()
 
             # Step Q's last because pi_loss.backward() uses them?
             self.q1_optimizer.zero_grad()
             q1_loss.backward()
             q1_grad_norm = torch.nn.utils.clip_grad_norm_(self.agent.q1_parameters(),
-                self.clip_grad_norm)
+                                                          self.clip_grad_norm)
             self.q1_optimizer.step()
 
             self.q2_optimizer.zero_grad()
             q2_loss.backward()
             q2_grad_norm = torch.nn.utils.clip_grad_norm_(self.agent.q2_parameters(),
-                self.clip_grad_norm)
+                                                          self.clip_grad_norm)
             self.q2_optimizer.step()
 
-            grad_norms = (q1_grad_norm, q2_grad_norm, v_grad_norm, pi_grad_norm)
+            grad_norms = (q1_grad_norm, q2_grad_norm,
+                          v_grad_norm, pi_grad_norm)
 
             self.append_opt_info_(opt_info, losses, grad_norms, values)
             self.update_counter += 1
@@ -199,7 +201,7 @@ class SAC_V(RlAlgorithm):
             target_v = self.agent.target_v(*target_inputs)
         disc = self.discount ** self.n_step_return
         y = (self.reward_scale * samples.return_ +
-            (1 - samples.done_n.float()) * disc * target_v)
+             (1 - samples.done_n.float()) * disc * target_v)
         if self.mid_batch_reset and not self.agent.recurrent:
             valid = torch.ones_like(samples.done, dtype=torch.float)
         else:
@@ -214,13 +216,15 @@ class SAC_V(RlAlgorithm):
         q2_loss = 0.5 * valid_mean((y - q2) ** 2, valid)
 
         v = self.agent.v(*agent_inputs)
-        new_action, log_pi, (pi_mean, pi_log_std) = self.agent.pi(*agent_inputs)
+        new_action, log_pi, (pi_mean, pi_log_std) = self.agent.pi(
+            *agent_inputs)
         if not self.reparameterize:
             new_action = new_action.detach()  # No grad.
         log_target1, log_target2 = self.agent.q(*agent_inputs, new_action)
         min_log_target = torch.min(log_target1, log_target2)
         prior_log_pi = self.get_action_prior(new_action.cpu())
-        v_target = (min_log_target - log_pi + prior_log_pi).detach()  # No grad.
+        # No grad.
+        v_target = (min_log_target - log_pi + prior_log_pi).detach()
 
         v_loss = 0.5 * valid_mean((v - v_target) ** 2, valid)
 
@@ -235,7 +239,8 @@ class SAC_V(RlAlgorithm):
         pi_loss = valid_mean(pi_losses, valid)
 
         losses = (q1_loss, q2_loss, v_loss, pi_loss)
-        values = tuple(val.detach() for val in (q1, q2, v, pi_mean, pi_log_std))
+        values = tuple(val.detach()
+                       for val in (q1, q2, v, pi_mean, pi_log_std))
         return losses, values
 
     # def q_loss(self, samples):
@@ -346,10 +351,14 @@ class SAC_V(RlAlgorithm):
         opt_info.q2Loss.append(q2_loss.item())
         opt_info.vLoss.append(v_loss.item())
         opt_info.piLoss.append(pi_loss.item())
-        opt_info.q1GradNorm.append(torch.tensor(q1_grad_norm).item())  # backwards compatible
-        opt_info.q2GradNorm.append(torch.tensor(q2_grad_norm).item())  # backwards compatible
-        opt_info.vGradNorm.append(torch.tensor(v_grad_norm).item())  # backwards compatible
-        opt_info.piGradNorm.append(torch.tensor(pi_grad_norm).item())  # backwards compatible
+        opt_info.q1GradNorm.append(torch.tensor(
+            q1_grad_norm).item())  # backwards compatible
+        opt_info.q2GradNorm.append(torch.tensor(
+            q2_grad_norm).item())  # backwards compatible
+        opt_info.vGradNorm.append(torch.tensor(
+            v_grad_norm).item())  # backwards compatible
+        opt_info.piGradNorm.append(torch.tensor(
+            pi_grad_norm).item())  # backwards compatible
         opt_info.q1.extend(q1[::10].numpy())  # Downsample for stats.
         opt_info.q2.extend(q2[::10].numpy())
         opt_info.v.extend(v[::10].numpy())

@@ -17,9 +17,9 @@ class SerialSampler(BaseSampler):
     """
 
     def __init__(self, *args, CollectorCls=CpuResetCollector,
-            eval_CollectorCls=SerialEvalCollector, **kwargs):
+                 eval_CollectorCls=SerialEvalCollector, **kwargs):
         super().__init__(*args, CollectorCls=CollectorCls,
-            eval_CollectorCls=eval_CollectorCls, **kwargs)
+                         eval_CollectorCls=eval_CollectorCls, **kwargs)
 
     def initialize(
             self,
@@ -30,7 +30,7 @@ class SerialSampler(BaseSampler):
             traj_info_kwargs=None,
             rank=0,
             world_size=1,
-            ):
+    ):
         """Store the input arguments.  Instantiate the specified number of environment
         instances (``batch_B``).  Initialize the agent, and pre-allocate a memory buffer
         to hold the samples collected in each batch.  Applies ``traj_info_kwargs`` settings
@@ -48,10 +48,10 @@ class SerialSampler(BaseSampler):
         global_B = B * world_size
         env_ranks = list(range(rank * B, (rank + 1) * B))
         agent.initialize(envs[0].spaces, share_memory=False,
-            global_B=global_B, env_ranks=env_ranks)
+                         global_B=global_B, env_ranks=env_ranks)
         samples_pyt, samples_np, examples = build_samples_buffer(agent, envs[0],
-            self.batch_spec, bootstrap_value, agent_shared=False,
-            env_shared=False, subprocess=False)
+                                                                 self.batch_spec, bootstrap_value, agent_shared=False,
+                                                                 env_shared=False, subprocess=False)
         if traj_info_kwargs:
             for k, v in traj_info_kwargs.items():
                 setattr(self.TrajInfoCls, "_" + k, v)  # Avoid passing at init.
@@ -67,7 +67,7 @@ class SerialSampler(BaseSampler):
         )
         if self.eval_n_envs > 0:  # May do evaluation.
             eval_envs = [self.EnvCls(**self.eval_env_kwargs)
-                for _ in range(self.eval_n_envs)]
+                         for _ in range(self.eval_n_envs)]
             set_envs_seeds(eval_envs, seed)
             eval_CollectorCls = self.eval_CollectorCls or SerialEvalCollector
             self.eval_collector = eval_CollectorCls(

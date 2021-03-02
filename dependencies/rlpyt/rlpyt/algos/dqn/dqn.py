@@ -6,15 +6,15 @@ from rlpyt.algos.base import RlAlgorithm
 from rlpyt.utils.quick_args import save__init__args
 from rlpyt.utils.logging import logger
 from rlpyt.replays.non_sequence.frame import (UniformReplayFrameBuffer,
-    PrioritizedReplayFrameBuffer, AsyncUniformReplayFrameBuffer,
-    AsyncPrioritizedReplayFrameBuffer)
+                                              PrioritizedReplayFrameBuffer, AsyncUniformReplayFrameBuffer,
+                                              AsyncPrioritizedReplayFrameBuffer)
 from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.tensor import select_at_indexes, valid_mean
 from rlpyt.algos.utils import valid_from_done
 
 OptInfo = namedtuple("OptInfo", ["loss", "gradNorm", "tdAbsErr"])
 SamplesToBuffer = namedarraytuple("SamplesToBuffer",
-    ["observation", "action", "reward", "done"])
+                                  ["observation", "action", "reward", "done"])
 
 
 class DQN(RlAlgorithm):
@@ -55,7 +55,7 @@ class DQN(RlAlgorithm):
             default_priority=None,
             ReplayBufferCls=None,  # Leave None to select by above options.
             updates_per_sync=1,  # For async mode only.
-            ):
+    ):
         """Saves input arguments.  
 
         ``delta_clip`` selects the Huber loss; if ``None``, uses MSE.
@@ -64,7 +64,7 @@ class DQN(RlAlgorithm):
         to data-generation.  For example, original DQN sampled 4 environment steps between
         each training update with batch-size 32, for a replay ratio of 8.
 
-        """ 
+        """
         if optim_kwargs is None:
             optim_kwargs = dict(eps=0.01 / batch_size)
         if default_priority is None:
@@ -75,7 +75,7 @@ class DQN(RlAlgorithm):
         self.update_counter = 0
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples,
-            world_size=1, rank=0):
+                   world_size=1, rank=0):
         """Stores input arguments and initializes replay buffer and optimizer.
         Use in non-async runners.  Computes number of gradient updates per
         optimization iteration as `(replay_ratio * sampler-batch-size /
@@ -85,11 +85,11 @@ class DQN(RlAlgorithm):
         self.sampler_bs = sampler_bs = batch_spec.size
         self.mid_batch_reset = mid_batch_reset
         self.updates_per_optimize = max(1, round(self.replay_ratio * sampler_bs /
-            self.batch_size))
+                                                 self.batch_size))
         logger.log(f"From sampler batch size {batch_spec.size}, training "
-            f"batch size {self.batch_size}, and replay ratio "
-            f"{self.replay_ratio}, computed {self.updates_per_optimize} "
-            f"updates per iteration.")
+                   f"batch size {self.batch_size}, and replay ratio "
+                   f"{self.replay_ratio}, computed {self.updates_per_optimize} "
+                   f"updates per iteration.")
         self.min_itr_learn = int(self.min_steps_learn // sampler_bs)
         eps_itr_max = max(1, int(self.eps_steps // sampler_bs))
         agent.set_epsilon_itr_min_max(self.min_itr_learn, eps_itr_max)
@@ -97,7 +97,7 @@ class DQN(RlAlgorithm):
         self.optim_initialize(rank)
 
     def async_initialize(self, agent, sampler_n_itr, batch_spec, mid_batch_reset,
-            examples, world_size=1):
+                         examples, world_size=1):
         """Used in async runner only; returns replay buffer allocated in shared
         memory, does not instantiate optimizer. """
         self.agent = agent
@@ -116,7 +116,7 @@ class DQN(RlAlgorithm):
         """Called in initilize or by async runner after forking sampler."""
         self.rank = rank
         self.optimizer = self.OptimCls(self.agent.parameters(),
-            lr=self.learning_rate, **self.optim_kwargs)
+                                       lr=self.learning_rate, **self.optim_kwargs)
         if self.initial_optim_state_dict is not None:
             self.optimizer.load_state_dict(self.initial_optim_state_dict)
         if self.prioritized_replay:
@@ -144,15 +144,15 @@ class DQN(RlAlgorithm):
                 default_priority=self.default_priority,
             ))
             ReplayCls = (AsyncPrioritizedReplayFrameBuffer if async_ else
-                PrioritizedReplayFrameBuffer)
+                         PrioritizedReplayFrameBuffer)
         else:
             ReplayCls = (AsyncUniformReplayFrameBuffer if async_ else
-                UniformReplayFrameBuffer)
+                         UniformReplayFrameBuffer)
         if self.ReplayBufferCls is not None:
             ReplayCls = self.ReplayBufferCls
             logger.log(f"WARNING: ignoring internal selection logic and using"
-                f" input replay buffer class: {ReplayCls} -- compatibility not"
-                " guaranteed.")
+                       f" input replay buffer class: {ReplayCls} -- compatibility not"
+                       " guaranteed.")
         self.replay_buffer = ReplayCls(**replay_kwargs)
 
     def optimize_agent(self, itr, samples=None, sampler_itr=None):
@@ -171,7 +171,8 @@ class DQN(RlAlgorithm):
         if itr < self.min_itr_learn:
             return opt_info
         for _ in range(self.updates_per_optimize):
-            samples_from_replay = self.replay_buffer.sample_batch(self.batch_size)
+            samples_from_replay = self.replay_buffer.sample_batch(
+                self.batch_size)
             self.optimizer.zero_grad()
             loss, td_abs_errors = self.loss(samples_from_replay)
             loss.backward()
@@ -181,7 +182,8 @@ class DQN(RlAlgorithm):
             if self.prioritized_replay:
                 self.replay_buffer.update_batch_priorities(td_abs_errors)
             opt_info.loss.append(loss.item())
-            opt_info.gradNorm.append(torch.tensor(grad_norm).item())  # backwards compatible
+            opt_info.gradNorm.append(torch.tensor(
+                grad_norm).item())  # backwards compatible
             opt_info.tdAbsErr.extend(td_abs_errors[::8].numpy())  # Downsample.
             self.update_counter += 1
             if self.update_counter % self.target_update_interval == 0:
@@ -273,7 +275,7 @@ class DQN(RlAlgorithm):
         #     self.agent.set_sample_epsilon_greedy(new_eps)
         if self.prioritized_replay and itr <= self.pri_beta_itr:
             prog = min(1, max(0, itr - self.min_itr_learn) /
-                (self.pri_beta_itr - self.min_itr_learn))
+                       (self.pri_beta_itr - self.min_itr_learn))
             new_beta = (prog * self.pri_beta_final +
-                (1 - prog) * self.pri_beta_init)
+                        (1 - prog) * self.pri_beta_init)
             self.replay_buffer.set_beta(new_beta)

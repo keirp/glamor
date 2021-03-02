@@ -22,7 +22,7 @@ class BaseCollector:
             step_buffer_np=None,
             global_B=1,
             env_ranks=None,
-            ):
+    ):
         save__init__args(locals())
 
     def start_envs(self):
@@ -35,7 +35,8 @@ class BaseCollector:
         """
         if getattr(self, "agent", None) is not None:  # Not in GPU collectors.
             self.agent.collector_initialize(
-                global_B=self.global_B,  # Args used e.g. for vector epsilon greedy.
+                # Args used e.g. for vector epsilon greedy.
+                global_B=self.global_B,
                 env_ranks=self.env_ranks,
             )
             self.agent.reset()
@@ -63,7 +64,7 @@ class BaseEvalCollector:
             agent=None,
             sync=None,
             step_buffer_np=None,
-            ):
+    ):
         save__init__args(locals())
 
     def collect_evaluation(self):
@@ -90,11 +91,11 @@ class DecorrelatingStartCollector(BaseCollector):
         for b, obs in enumerate(observations):
             observation[b] = obs  # numpy array or namedarraytuple
         prev_action = np.stack([env.action_space.null_value()
-            for env in self.envs])
+                                for env in self.envs])
         prev_reward = np.zeros(len(self.envs), dtype="float32")
         if self.rank == 0:
             logger.log("Sampler decorrelating envs, max steps: "
-                f"{max_decorrelation_steps}")
+                       f"{max_decorrelation_steps}")
         if max_decorrelation_steps != 0:
             for b, env in enumerate(self.envs):
                 n_steps = 1 + int(np.random.rand() * max_decorrelation_steps)

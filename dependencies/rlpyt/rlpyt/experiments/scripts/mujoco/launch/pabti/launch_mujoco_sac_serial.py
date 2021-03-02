@@ -15,7 +15,7 @@ runs_per_setting = 5
 variant_levels = list()
 
 env_ids = ["Hopper-v3", "HalfCheetah-v3",
-    "Walker2d-v3", "Ant-v3"]
+           "Walker2d-v3", "Ant-v3"]
 values = list(zip(env_ids))
 dir_names = ["env_{}".format(*v) for v in values]
 keys = [("env", "id")]

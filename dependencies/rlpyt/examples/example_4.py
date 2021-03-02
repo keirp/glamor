@@ -17,7 +17,7 @@ use of 'valid' mask.
 """
 from rlpyt.samplers.parallel.gpu.sampler import GpuSampler
 from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector,
-    GpuWaitResetCollector)
+                                                    GpuWaitResetCollector)
 from rlpyt.envs.atari.atari_env import AtariEnv, AtariTrajInfo
 from rlpyt.algos.pg.a2c import A2C
 from rlpyt.agents.pg.atari import AtariLstmAgent
@@ -33,7 +33,8 @@ def build_and_train(game="pong", run_ID=0, cuda_idx=None, mid_batch_reset=False,
     sampler = GpuSampler(
         EnvCls=AtariEnv,
         TrajInfoCls=AtariTrajInfo,
-        env_kwargs=dict(game=game, num_img_obs=1),  # Learn on individual frames.
+        # Learn on individual frames.
+        env_kwargs=dict(game=game, num_img_obs=1),
         CollectorCls=Collector,
         batch_T=20,  # Longer sampling/optimization horizon for recurrence.
         batch_B=16,  # 16 parallel environments.
@@ -58,13 +59,17 @@ def build_and_train(game="pong", run_ID=0, cuda_idx=None, mid_batch_reset=False,
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--game', help='Atari game', default='pong')
-    parser.add_argument('--run_ID', help='run identifier (logging)', type=int, default=0)
-    parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=None)
+    parser.add_argument(
+        '--run_ID', help='run identifier (logging)', type=int, default=0)
+    parser.add_argument('--cuda_idx', help='gpu to use ',
+                        type=int, default=None)
     parser.add_argument('--mid_batch_reset', help='whether environment resets during itr',
-        type=bool, default=False)
-    parser.add_argument('--n_parallel', help='number of sampler workers', type=int, default=2)
+                        type=bool, default=False)
+    parser.add_argument(
+        '--n_parallel', help='number of sampler workers', type=int, default=2)
     args = parser.parse_args()
     build_and_train(
         game=args.game,

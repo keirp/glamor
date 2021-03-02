@@ -15,6 +15,8 @@ from rlpyt.samplers.collections import TrajInfo
 # make keys and values keep the same structure and shape at all time steps.)
 # Here, a dict of kwargs to be fed to `sometimes_info` should be passed as an
 # env_kwarg into the `make` function, which should be used as the EnvCls.
+
+
 def sometimes_info(*args, **kwargs):
     # e.g. Feed the env_id.
     # Return a dictionary (possibly nested) of keys: default_values
@@ -42,10 +44,10 @@ class SafetyGymEnvWrapper(Wrapper):
             #     prop_shape = (prop_shape[0] + 1,)
             obs_space = dict(
                 prop=gym.spaces.Box(-1e6, 1e6, prop_shape,
-                    obs["prop"].dtype))
+                                    obs["prop"].dtype))
             if "vision" in obs:
                 obs_space["vision"] = gym.spaces.Box(0, 1, obs["vision"].shape,
-                    obs["vision"].dtype)
+                                                     obs["vision"].dtype)
             # GymWrapper will in turn convert this to rlpyt.spaces.Composite.
             self.observation_space = gym.spaces.Dict(obs_space)
         elif obs_prev_cost:
@@ -57,7 +59,7 @@ class SafetyGymEnvWrapper(Wrapper):
                 assert len(obs_shape) == 1
                 obs_shape = (obs_shape[0] + 1,)
                 self.observation_space = gym.spaces.Box(-1e6, 1e6, obs_shape,
-                    obs.dtype)
+                                                        obs.dtype)
         self._cum_cost = 0.
 
     def step(self, action):
@@ -87,7 +89,7 @@ class SafetyGymEnvWrapper(Wrapper):
             # flatten everything else than vision.
             obs_ = dict(
                 prop=np.concatenate([obs[k].reshape(-1)
-                    for k in self._prop_keys])
+                                     for k in self._prop_keys])
             )
             if "vision" in obs:
                 # [H,W,C] --> [C,H,W]
@@ -110,9 +112,9 @@ def infill_info(info, sometimes_info):
 
 
 def safety_gym_make(*args, sometimes_info_kwargs=None, obs_prev_cost=True,
-        obs_version="default", **kwargs):
+                    obs_version="default", **kwargs):
     assert obs_version in ["default", "vision", "vision_only", "no_lidar",
-        "no_constraints"]
+                           "no_constraints"]
     if obs_version != "default":
         eid = kwargs["id"]  # Must provide as kwarg, not arg.
         names = dict(  # Map to my modification in safety-gym suite.

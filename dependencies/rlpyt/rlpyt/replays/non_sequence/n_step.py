@@ -7,7 +7,7 @@ from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.buffer import torchify_buffer
 
 SamplesFromReplay = namedarraytuple("SamplesFromReplay",
-    ["agent_inputs", "action", "return_", "done", "done_n", "target_inputs"])
+                                    ["agent_inputs", "action", "return_", "done", "done_n", "target_inputs"])
 
 
 class NStepReturnBuffer(BaseNStepReturnBuffer):

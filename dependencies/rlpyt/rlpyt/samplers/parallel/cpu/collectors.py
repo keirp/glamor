@@ -2,10 +2,10 @@
 import numpy as np
 
 from rlpyt.samplers.collectors import (DecorrelatingStartCollector,
-    BaseEvalCollector)
+                                       BaseEvalCollector)
 from rlpyt.agents.base import AgentInputs
 from rlpyt.utils.buffer import (torchify_buffer, numpify_buffer, buffer_from_example,
-    buffer_method)
+                                buffer_method)
 
 
 class CpuResetCollector(DecorrelatingStartCollector):
@@ -41,7 +41,7 @@ class CpuResetCollector(DecorrelatingStartCollector):
                 # Environment inputs and outputs are numpy arrays.
                 o, r, d, env_info = env.step(action[b])
                 traj_infos[b].step(observation[b], action[b], r, d, agent_info[b],
-                    env_info)
+                                   env_info)
                 if getattr(env_info, "traj_done", d):
                     completed_infos.append(traj_infos[b].terminate(o))
                     traj_infos[b] = self.TrajInfoCls()
@@ -60,7 +60,8 @@ class CpuResetCollector(DecorrelatingStartCollector):
 
         if "bootstrap_value" in agent_buf:
             # agent.value() should not advance rnn state.
-            agent_buf.bootstrap_value[:] = self.agent.value(obs_pyt, act_pyt, rew_pyt)
+            agent_buf.bootstrap_value[:] = self.agent.value(
+                obs_pyt, act_pyt, rew_pyt)
 
         return AgentInputs(observation, action, reward), traj_infos, completed_infos
 
@@ -121,7 +122,7 @@ class CpuWaitResetCollector(DecorrelatingStartCollector):
                 # Environment inputs and outputs are numpy arrays.
                 o, r, d, env_info = env.step(action[b])
                 traj_infos[b].step(observation[b], action[b], r, d, agent_info[b],
-                    env_info)
+                                   env_info)
                 if getattr(env_info, "traj_done", d):
                     completed_infos.append(traj_infos[b].terminate(o))
                     traj_infos[b] = self.TrajInfoCls()
@@ -142,7 +143,8 @@ class CpuWaitResetCollector(DecorrelatingStartCollector):
 
         if "bootstrap_value" in agent_buf:
             # agent.value() should not advance rnn state.
-            agent_buf.bootstrap_value[:] = self.agent.value(obs_pyt, act_pyt, rew_pyt)
+            agent_buf.bootstrap_value[:] = self.agent.value(
+                obs_pyt, act_pyt, rew_pyt)
 
         return AgentInputs(observation, action, reward), traj_infos, completed_infos
 
@@ -171,9 +173,10 @@ class CpuEvalCollector(BaseEvalCollector):
         for b, o in enumerate(observations):
             observation[b] = o
         action = buffer_from_example(self.envs[0].action_space.null_value(),
-            len(self.envs))
+                                     len(self.envs))
         reward = np.zeros(len(self.envs), dtype="float32")
-        obs_pyt, act_pyt, rew_pyt = torchify_buffer((observation, action, reward))
+        obs_pyt, act_pyt, rew_pyt = torchify_buffer(
+            (observation, action, reward))
         self.agent.reset()
         self.agent.eval_mode(itr)
         for t in range(self.max_T):
@@ -182,7 +185,7 @@ class CpuEvalCollector(BaseEvalCollector):
             for b, env in enumerate(self.envs):
                 o, r, d, env_info = env.step(action[b])
                 traj_infos[b].step(observation[b], action[b], r, d,
-                    agent_info[b], env_info)
+                                   agent_info[b], env_info)
                 if getattr(env_info, "traj_done", d):
                     self.traj_infos_queue.put(traj_infos[b].terminate(o))
                     traj_infos[b] = self.TrajInfoCls()

@@ -16,7 +16,7 @@ config = dict(
     env=dict(
         game="pong",
         num_img_obs=1,
-        ),
+    ),
     model=dict(),
     optim=dict(),
     runner=dict(

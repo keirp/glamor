@@ -8,17 +8,17 @@ from rlpyt.utils.quick_args import save__init__args
 from rlpyt.utils.logging import logger
 from rlpyt.utils.collections import namedarraytuple
 from rlpyt.replays.sequence.frame import (UniformSequenceReplayFrameBuffer,
-    PrioritizedSequenceReplayFrameBuffer, AsyncUniformSequenceReplayFrameBuffer,
-    AsyncPrioritizedSequenceReplayFrameBuffer)
+                                          PrioritizedSequenceReplayFrameBuffer, AsyncUniformSequenceReplayFrameBuffer,
+                                          AsyncPrioritizedSequenceReplayFrameBuffer)
 from rlpyt.utils.tensor import select_at_indexes, valid_mean
 from rlpyt.algos.utils import valid_from_done, discount_return_n_step
 from rlpyt.utils.buffer import buffer_to, buffer_method, torchify_buffer
 
 OptInfo = namedtuple("OptInfo", ["loss", "gradNorm", "tdAbsErr", "priority"])
 SamplesToBufferRnn = namedarraytuple("SamplesToBufferRnn",
-    SamplesToBuffer._fields + ("prev_rnn_state",))
+                                     SamplesToBuffer._fields + ("prev_rnn_state",))
 PrioritiesSamplesToBuffer = namedarraytuple("PrioritiesSamplesToBuffer",
-    ["priorities", "samples"])
+                                            ["priorities", "samples"])
 
 
 class R2D1(DQN):
@@ -38,7 +38,8 @@ class R2D1(DQN):
             delta_clip=None,  # Typically use squared-error loss (Steven).
             replay_size=int(1e6),
             replay_ratio=1,
-            target_update_interval=2500,  # (Steven says 2500 but maybe faster.)
+            # (Steven says 2500 but maybe faster.)
+            target_update_interval=2500,
             n_step_return=5,
             learning_rate=1e-4,
             OptimCls=torch.optim.Adam,
@@ -63,12 +64,12 @@ class R2D1(DQN):
             value_scale_eps=1e-3,  # 1e-3 (Steven).
             ReplayBufferCls=None,  # leave None to select by above options
             updates_per_sync=1,  # For async mode only.
-            ):
+    ):
         """Saves input arguments.
 
         Args:
             store_rnn_state_interval (int): store RNN state only once this many steps, to reduce memory usage; replay sequences will only begin at the steps with stored recurrent state.
-        
+
         Note:
             Typically ran with ``store_rnn_state_interval`` equal to the sampler's ``batch_T``, 40.  Then every 40 steps
             can be the beginning of a replay sequence, and will be guaranteed to start with a valid RNN state.  Only reset
@@ -94,8 +95,8 @@ class R2D1(DQN):
         )
         if self.store_rnn_state_interval > 0:
             example_to_buffer = SamplesToBufferRnn(*example_to_buffer,
-                prev_rnn_state=examples["agent_info"].prev_rnn_state,
-            )
+                                                   prev_rnn_state=examples["agent_info"].prev_rnn_state,
+                                                   )
         replay_kwargs = dict(
             example=example_to_buffer,
             size=self.replay_size,
@@ -115,15 +116,15 @@ class R2D1(DQN):
                 input_priority_shift=self.input_priority_shift,
             ))
             ReplayCls = (AsyncPrioritizedSequenceReplayFrameBuffer if async_
-                else PrioritizedSequenceReplayFrameBuffer)
+                         else PrioritizedSequenceReplayFrameBuffer)
         else:
             ReplayCls = (AsyncUniformSequenceReplayFrameBuffer if async_
-                else UniformSequenceReplayFrameBuffer)
+                         else UniformSequenceReplayFrameBuffer)
         if self.ReplayBufferCls is not None:
             ReplayCls = self.ReplayBufferCls
             logger.log(f"WARNING: ignoring internal selection logic and using"
-                f" input replay buffer class: {ReplayCls} -- compatibility not"
-                " guaranteed.")
+                       f" input replay buffer class: {ReplayCls} -- compatibility not"
+                       " guaranteed.")
         self.replay_buffer = ReplayCls(**replay_kwargs)
         return self.replay_buffer
 
@@ -158,7 +159,8 @@ class R2D1(DQN):
             if self.prioritized_replay:
                 self.replay_buffer.update_batch_priorities(priorities)
             opt_info.loss.append(loss.item())
-            opt_info.gradNorm.append(torch.tensor(grad_norm).item())  # backwards compatible
+            opt_info.gradNorm.append(torch.tensor(
+                grad_norm).item())  # backwards compatible
             opt_info.tdAbsErr.extend(td_abs_errors[::8].numpy())
             opt_info.priority.extend(priorities)
             self.update_counter += 1
@@ -171,7 +173,7 @@ class R2D1(DQN):
         samples_to_buffer = super().samples_to_buffer(samples)
         if self.store_rnn_state_interval > 0:
             samples_to_buffer = SamplesToBufferRnn(*samples_to_buffer,
-                prev_rnn_state=samples.agent.agent_info.prev_rnn_state)
+                                                   prev_rnn_state=samples.agent.agent_info.prev_rnn_state)
         if self.input_priorities:
             priorities = self.compute_input_priorities(samples)
             samples_to_buffer = PrioritiesSamplesToBuffer(
@@ -228,9 +230,10 @@ class R2D1(DQN):
         #     (self.discount * (1 - samples.env.done[:-1].float()) *  # probably done.float()
         #         self.inv_value_scale(q_max[1:]))
         # )
-        nm1 = max(1, self.n_step_return - 1)  # At least 1 bc don't have next Q.
+        # At least 1 bc don't have next Q.
+        nm1 = max(1, self.n_step_return - 1)
         y = self.value_scale(return_n +
-            (1 - done_n.float()) * self.inv_value_scale(q_max[nm1:]))
+                             (1 - done_n.float()) * self.inv_value_scale(q_max[nm1:]))
         delta = abs(q_at_a[:-nm1] - y)
         # NOTE: by default, with R2D1, use squared-error loss, delta_clip=None.
         if self.delta_clip is not None:  # Huber loss.
@@ -268,7 +271,8 @@ class R2D1(DQN):
             prev_action=all_action[agent_slice],
             prev_reward=all_reward[agent_slice],
         )
-        target_slice = slice(wT, None)  # Same start t as agent. (wT + bT + nsr)
+        # Same start t as agent. (wT + bT + nsr)
+        target_slice = slice(wT, None)
         target_inputs = AgentInputs(
             observation=all_observation[target_slice],
             prev_action=all_action[target_slice],
@@ -281,7 +285,8 @@ class R2D1(DQN):
             init_rnn_state = None
         else:
             # [B,N,H]-->[N,B,H] cudnn.
-            init_rnn_state = buffer_method(samples.init_rnn_state, "transpose", 0, 1)
+            init_rnn_state = buffer_method(
+                samples.init_rnn_state, "transpose", 0, 1)
             init_rnn_state = buffer_method(init_rnn_state, "contiguous")
         if wT > 0:  # Do warmup.
             with torch.no_grad():
@@ -291,7 +296,8 @@ class R2D1(DQN):
             # warmup_T (and no mid_batch_reset), so that end of trajectory
             # during warmup leads to new trajectory beginning at start of
             # training segment of replay.
-            warmup_invalid_mask = valid_from_done(samples.done[:wT])[-1] == 0  # [B]
+            warmup_invalid_mask = valid_from_done(
+                samples.done[:wT])[-1] == 0  # [B]
             init_rnn_state[:, warmup_invalid_mask] = 0  # [N,B,H] (cudnn)
             target_rnn_state[:, warmup_invalid_mask] = 0
         else:
@@ -311,7 +317,7 @@ class R2D1(DQN):
 
         disc = self.discount ** self.n_step_return
         y = self.value_scale(return_ + (1 - done_n.float()) * disc *
-            self.inv_value_scale(target_q))  # [T,B]
+                             self.inv_value_scale(target_q))  # [T,B]
         delta = y - q
         losses = 0.5 * delta ** 2
         abs_delta = abs(delta)
@@ -325,10 +331,12 @@ class R2D1(DQN):
         loss = valid_mean(losses, valid)
         td_abs_errors = abs_delta.detach()
         if self.delta_clip is not None:
-            td_abs_errors = torch.clamp(td_abs_errors, 0, self.delta_clip)  # [T,B]
+            td_abs_errors = torch.clamp(
+                td_abs_errors, 0, self.delta_clip)  # [T,B]
         valid_td_abs_errors = td_abs_errors * valid
         max_d = torch.max(valid_td_abs_errors, dim=0).values
-        mean_d = valid_mean(td_abs_errors, valid, dim=0)  # Still high if less valid.
+        # Still high if less valid.
+        mean_d = valid_mean(td_abs_errors, valid, dim=0)
         priorities = self.pri_eta * max_d + (1 - self.pri_eta) * mean_d  # [B]
 
         return loss, valid_td_abs_errors, priorities
@@ -336,10 +344,10 @@ class R2D1(DQN):
     def value_scale(self, x):
         """Value scaling function to handle raw rewards across games (not clipped)."""
         return (torch.sign(x) * (torch.sqrt(abs(x) + 1) - 1) +
-            self.value_scale_eps * x)
+                self.value_scale_eps * x)
 
     def inv_value_scale(self, z):
         """Invert the value scaling."""
         return torch.sign(z) * (((torch.sqrt(1 + 4 * self.value_scale_eps *
-            (abs(z) + 1 + self.value_scale_eps)) - 1) /
-            (2 * self.value_scale_eps)) ** 2 - 1)
+                                             (abs(z) + 1 + self.value_scale_eps)) - 1) /
+                                 (2 * self.value_scale_eps)) ** 2 - 1)

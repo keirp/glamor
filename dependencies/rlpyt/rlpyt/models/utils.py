@@ -6,7 +6,8 @@ def conv2d_output_shape(h, w, kernel_size=1, stride=1, padding=0, dilation=1):
     """
     Returns output H, W after convolution/pooling on input H, W.
     """
-    kh, kw = kernel_size if isinstance(kernel_size, tuple) else (kernel_size,) * 2
+    kh, kw = kernel_size if isinstance(
+        kernel_size, tuple) else (kernel_size,) * 2
     sh, sw = stride if isinstance(stride, tuple) else (stride,) * 2
     ph, pw = padding if isinstance(padding, tuple) else (padding,) * 2
     d = dilation
@@ -50,7 +51,7 @@ def update_state_dict(model, state_dict, tau=1, strip_ddp=True):
         model.load_state_dict(state_dict)
     elif tau > 0:
         update_sd = {k: tau * state_dict[k] + (1 - tau) * v
-            for k, v in model.state_dict().items()}
+                     for k, v in model.state_dict().items()}
         model.load_state_dict(update_sd)
 
 

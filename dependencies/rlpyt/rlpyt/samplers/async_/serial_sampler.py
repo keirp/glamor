@@ -16,9 +16,9 @@ class AsyncSerialSampler(AsyncSamplerMixin, BaseSampler):
     """
 
     def __init__(self, *args, CollectorCls=DbCpuResetCollector,
-            eval_CollectorCls=SerialEvalCollector, **kwargs):
+                 eval_CollectorCls=SerialEvalCollector, **kwargs):
         super().__init__(*args, CollectorCls=CollectorCls,
-            eval_CollectorCls=eval_CollectorCls, **kwargs)
+                         eval_CollectorCls=eval_CollectorCls, **kwargs)
 
     ###########################################################################
     # Sampler runner methods (forked).
@@ -38,7 +38,8 @@ class AsyncSerialSampler(AsyncSamplerMixin, BaseSampler):
         torch.set_num_threads(1)  # Needed to prevent MKL hang :( .
         B = self.batch_spec.B
         envs = [self.EnvCls(**self.env_kwargs) for _ in range(B)]
-        sync = AttrDict(db_idx=AttrDict(value=0))  # Mimic the mp.RawValue format.
+        # Mimic the mp.RawValue format.
+        sync = AttrDict(db_idx=AttrDict(value=0))
         collector = self.CollectorCls(
             rank=0,
             envs=envs,
@@ -50,7 +51,7 @@ class AsyncSerialSampler(AsyncSamplerMixin, BaseSampler):
         )
         if self.eval_n_envs > 0:
             eval_envs = [self.EnvCls(**self.eval_env_kwargs)
-                for _ in range(self.eval_n_envs)]
+                         for _ in range(self.eval_n_envs)]
             eval_CollectorCls = self.eval_CollectorCls or SerialEvalCollector
             self.eval_collector = eval_CollectorCls(
                 envs=eval_envs,

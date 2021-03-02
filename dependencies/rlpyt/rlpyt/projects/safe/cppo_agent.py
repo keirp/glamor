@@ -22,15 +22,15 @@ class CppoAgent(MujocoFfAgent):
             ModelCls=CppoModel,
             model_kwargs=None,
             initial_model_state_dict=None,
-            ):
+    ):
         super().__init__(ModelCls=ModelCls, model_kwargs=model_kwargs,
-            initial_model_state_dict=initial_model_state_dict)
+                         initial_model_state_dict=initial_model_state_dict)
         self._ddp = False
 
     @torch.no_grad()
     def value(self, observation, prev_action, prev_reward):
         agent_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         _mu, _log_std, value = self.model(*agent_inputs)
         return buffer_to(value, device="cpu")  # TODO: apply this to rlpyt.
 
@@ -55,18 +55,18 @@ class CppoLstmAgent(MujocoLstmAgent):
             ModelCls=CppoModel,  # I think can just swap in CppoConv
             model_kwargs=None,
             initial_model_state_dict=None,
-            ):
+    ):
         super().__init__(ModelCls=ModelCls, model_kwargs=model_kwargs,
-            initial_model_state_dict=initial_model_state_dict)
+                         initial_model_state_dict=initial_model_state_dict)
         self._ddp = False
 
     def initialize(self, *args, **kwargs):
         super().initialize(*args, **kwargs)
         # self.distribution.set_std(0.)
         self.beta_r_model = self.ModelCls(**self.model_kwargs,
-            **self.env_model_kwargs)
+                                          **self.env_model_kwargs)
         self.beta_c_model = self.ModelCls(**self.model_kwargs,
-            **self.env_model_kwargs)
+                                          **self.env_model_kwargs)
 
     def to_device(self, cuda_idx=None):
         super().to_device(cuda_idx=cuda_idx)
@@ -77,9 +77,9 @@ class CppoLstmAgent(MujocoLstmAgent):
     @torch.no_grad()
     def value(self, observation, prev_action, prev_reward):
         agent_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         _mu, _log_std, value, _rnn_state = self.model(*agent_inputs,
-            self.prev_rnn_state)
+                                                      self.prev_rnn_state)
         return buffer_to(value, device="cpu")
 
     def update_obs_rms(self, observation):
@@ -95,10 +95,10 @@ class CppoLstmAgent(MujocoLstmAgent):
         return device_id
 
     def beta_dist_infos(self, observation, prev_action, prev_reward,
-            init_rnn_state):
+                        init_rnn_state):
         model_inputs = buffer_to((observation, prev_action, prev_reward,
-            init_rnn_state), device=self.device)
+                                  init_rnn_state), device=self.device)
         r_mu, r_log_std, _, _ = self.beta_r_model(*model_inputs)
         c_mu, c_log_std, _, _ = self.beta_c_model(*model_inputs)
         return buffer_to((DistInfoStd(mean=r_mu, log_std=r_log_std),
-            DistInfoStd(mean=c_mu, log_std=c_log_std)), device="cpu")
+                          DistInfoStd(mean=c_mu, log_std=c_log_std)), device="cpu")

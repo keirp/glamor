@@ -14,7 +14,7 @@ def tuple_itemgetter(i):
 
 
 def namedarraytuple(typename, field_names, return_namedtuple_cls=False,
-        classname_suffix=False):
+                    classname_suffix=False):
     """
     Returns a new subclass of a namedtuple which exposes indexing / slicing
     reads and writes applied to all contained objects, which must share
@@ -67,10 +67,10 @@ def namedarraytuple(typename, field_names, return_namedtuple_cls=False,
                     _ = s[loc]
                 except IndexError:
                     raise Exception(f"Occured in {self.__class__} at field "
-                        f"'{self._fields[j]}'.") from e
+                                    f"'{self._fields[j]}'.") from e
 
     __getitem__.__doc__ = (f"Return a new {typename} instance containing "
-        "the selected index or slice from each field.")
+                           "the selected index or slice from each field.")
 
     def __setitem__(self, loc, value):
         """
@@ -89,7 +89,7 @@ def namedarraytuple(typename, field_names, return_namedtuple_cls=False,
                     s[loc] = v
         except (ValueError, IndexError, TypeError) as e:
             raise Exception(f"Occured in {self.__class__} at field "
-                f"'{self._fields[j]}'.") from e
+                            f"'{self._fields[j]}'.") from e
 
     def __contains__(self, key):
         "Checks presence of field name (unlike tuple; like dict)."
@@ -146,7 +146,7 @@ def is_namedtuple_class(obj):
     if obj.mro()[1] is not tuple:
         return False
     if not all(hasattr(obj, attr)
-            for attr in ["_fields", "_asdict", "_make", "_replace"]):
+               for attr in ["_fields", "_asdict", "_make", "_replace"]):
         return False
     return True
 
@@ -186,21 +186,21 @@ def namedarraytuple_like(namedtuple_or_class, classname_suffix=False):
     ntc = namedtuple_or_class
     if is_namedtuple(ntc):
         return namedarraytuple(type(ntc).__name__, ntc._fields,
-            classname_suffix=classname_suffix)
+                               classname_suffix=classname_suffix)
     elif is_namedtuple_class(ntc):
         return namedarraytuple(ntc.__name__, ntc._fields,
-            classname_suffix=classname_suffix)
+                               classname_suffix=classname_suffix)
     elif is_namedarraytuple(ntc):
         return type(ntc)
     elif is_namedarraytuple_class(ntc):
         return ntc
     elif isinstance(ntc, (NamedTupleSchema, NamedTuple, NamedArrayTupleSchema,
-            NamedArrayTuple)):
+                          NamedArrayTuple)):
         return namedarraytuple(ntc._typename, ntc._fields,
-            classname_suffix=classname_suffix)
+                               classname_suffix=classname_suffix)
     else:
         raise TypeError("Input must be namedtuple or namedarraytuple instance"
-            f" or class, got {type(ntc)}.")
+                        f" or class, got {type(ntc)}.")
 
 
 class AttrDict(dict):
@@ -222,7 +222,7 @@ class AttrDict(dict):
         shallow copies otherwise, (e.g. numpy arrays are NOT copied).
         """
         return type(self)(**{k: v.copy() if isinstance(v, AttrDict) else v
-            for k, v in self.items()})
+                             for k, v in self.items()})
 
 
 ############################################################################
@@ -242,7 +242,8 @@ class NamedTupleSchema:
             raise TypeError(f"type name must be string, not {type(typename)}")
 
         if isinstance(fields, str):
-            spaces = any([whitespace in fields for whitespace in string.whitespace])
+            spaces = any(
+                [whitespace in fields for whitespace in string.whitespace])
             commas = "," in fields
             if spaces and commas:
                 raise ValueError(f"Single string fields={fields} cannot have both spaces and commas.")
@@ -266,7 +267,7 @@ class NamedTupleSchema:
         self.__dict__["_typename"] = typename
         self.__dict__["_fields"] = fields
         self.__dict__["_signature"] = Sig(Param(field,
-            Param.POSITIONAL_OR_KEYWORD) for field in fields)
+                                                Param.POSITIONAL_OR_KEYWORD) for field in fields)
 
     def __call__(self, *args, **kwargs):
         """Allows instances to act like `namedtuple` constructors."""
@@ -356,7 +357,7 @@ class NamedTuple(tuple):
     def __repr__(self):
         """Return a nicely formatted string showing the typename."""
         return self._typename + '(' + ', '.join(f'{name}={value}'
-            for name, value in zip(self._fields, self)) + ')'
+                                                for name, value in zip(self._fields, self)) + ')'
 
 
 class NamedArrayTupleSchema(NamedTupleSchema):
@@ -438,5 +439,5 @@ def NamedArrayTupleSchema_like(example):
         return NamedArrayTupleSchema(example.__name__, example._fields)
     else:
         raise TypeError("Input must be namedtuple or namedarraytuple instance"
-            f" or class, or Named[Array]Tuple[Schema] instance, got "
-            f"{type(example)}.")
+                        f" or class, or Named[Array]Tuple[Schema] instance, got "
+                        f"{type(example)}.")

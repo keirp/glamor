@@ -15,6 +15,7 @@ class AtariR2d1Model(torch.nn.Module):
     """2D convolutional neural network (for multiple video frames per
     observation) feeding into an LSTM and MLP output for Q-value outputs for
     the action set."""
+
     def __init__(
             self,
             image_shape,
@@ -28,7 +29,7 @@ class AtariR2d1Model(torch.nn.Module):
             kernel_sizes=None,
             strides=None,
             paddings=None,
-            ):
+    ):
         """Instantiates the neural network according to arguments; network defaults
         stored within this method."""
         super().__init__()
@@ -42,7 +43,8 @@ class AtariR2d1Model(torch.nn.Module):
             use_maxpool=use_maxpool,
             hidden_sizes=fc_size,  # ReLU applied here (Steven).
         )
-        self.lstm = torch.nn.LSTM(self.conv.output_size + output_size + 1, lstm_size)
+        self.lstm = torch.nn.LSTM(
+            self.conv.output_size + output_size + 1, lstm_size)
         if dueling:
             self.head = DuelingHeadModel(lstm_size, head_size, output_size)
         else:
@@ -57,14 +59,16 @@ class AtariR2d1Model(torch.nn.Module):
         # Infer (presence of) leading dimensions: [T,B], [B], or [].
         lead_dim, T, B, img_shape = infer_leading_dims(img, 3)
 
-        conv_out = self.conv(img.view(T * B, *img_shape))  # Fold if T dimension.
+        # Fold if T dimension.
+        conv_out = self.conv(img.view(T * B, *img_shape))
 
         lstm_input = torch.cat([
             conv_out.view(T, B, -1),
             prev_action.view(T, B, -1),  # Assumed onehot.
             prev_reward.view(T, B, 1),
-            ], dim=2)
-        init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
+        ], dim=2)
+        init_rnn_state = None if init_rnn_state is None else tuple(
+            init_rnn_state)
         lstm_out, (hn, cn) = self.lstm(lstm_input, init_rnn_state)
 
         q = self.head(lstm_out.view(T * B, -1))

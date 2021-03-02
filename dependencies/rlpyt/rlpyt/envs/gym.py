@@ -32,7 +32,7 @@ class GymEnvWrapper(Wrapper):
     """
 
     def __init__(self, env,
-            act_null_value=0, obs_null_value=0, force_float32=True):
+                 act_null_value=0, obs_null_value=0, force_float32=True):
         super().__init__(env)
         o = self.env.reset()
         o, r, d, info = self.env.step(self.env.action_space.sample())
@@ -100,7 +100,7 @@ def build_info_tuples(info, name="info"):
     if ntc is None:
         globals()[name] = namedtuple(name, info_keys)
     elif not (is_namedtuple_class(ntc) and
-            sorted(ntc._fields) == sorted(info_keys)):
+              sorted(ntc._fields) == sorted(info_keys)):
         raise ValueError(f"Name clash in globals: {name}.")
     for k, v in info.items():
         if isinstance(v, dict):
@@ -113,7 +113,7 @@ def info_to_nt(value, name="info"):
     ntc = globals()[name]
     # Disregard unrecognized keys:
     values = {k: info_to_nt(v, "_".join([name, k]))
-        for k, v in value.items() if k in ntc._fields}
+              for k, v in value.items() if k in ntc._fields}
     # Can catch some missing values (doesn't nest):
     values.update({k: 0 for k in ntc._fields if k not in values})
     return ntc(**values)

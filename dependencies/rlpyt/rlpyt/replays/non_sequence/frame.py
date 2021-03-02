@@ -21,7 +21,7 @@ class NStepFrameBuffer(FrameBufferMixin, NStepReturnBuffer):
         # return np.stack([self.samples_frames[t:t + self.n_frames, b]
         #     for t, b in zip(T_idxs, B_idxs)], axis=0)  # [B,C,H,W]
         observation = np.stack([self.samples_frames[t:t + self.n_frames, b]
-            for t, b in zip(T_idxs, B_idxs)], axis=0)  # [B,C,H,W]
+                                for t, b in zip(T_idxs, B_idxs)], axis=0)  # [B,C,H,W]
         # Populate empty (zero) frames after environment done.
         for f in range(1, self.n_frames):
             # e.g. if done 1 step prior, all but newest frame go blank.
@@ -39,10 +39,10 @@ class PrioritizedReplayFrameBuffer(PrioritizedReplay, NStepFrameBuffer):
 
 
 class AsyncUniformReplayFrameBuffer(AsyncReplayBufferMixin,
-        UniformReplayFrameBuffer):
+                                    UniformReplayFrameBuffer):
     pass
 
 
 class AsyncPrioritizedReplayFrameBuffer(AsyncReplayBufferMixin,
-        PrioritizedReplayFrameBuffer):
+                                        PrioritizedReplayFrameBuffer):
     pass

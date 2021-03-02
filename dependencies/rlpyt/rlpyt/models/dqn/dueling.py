@@ -20,13 +20,13 @@ class DuelingHeadModel(torch.nn.Module):
             hidden_sizes,
             output_size,
             grad_scale=2 ** (-1 / 2),
-            ):
+    ):
         super().__init__()
         if isinstance(hidden_sizes, int):
             hidden_sizes = [hidden_sizes]
         self.advantage_hidden = MlpModel(input_size, hidden_sizes)
         self.advantage_out = torch.nn.Linear(hidden_sizes[-1], output_size,
-            bias=False)
+                                             bias=False)
         self.advantage_bias = torch.nn.Parameter(torch.zeros(1))
         self.value = MlpModel(input_size, hidden_sizes, output_size=1)
         self._grad_scale = grad_scale
@@ -58,13 +58,13 @@ class DistributionalDuelingHeadModel(torch.nn.Module):
             output_size,
             n_atoms,
             grad_scale=2 ** (-1 / 2),
-            ):
+    ):
         super().__init__()
         if isinstance(hidden_sizes, int):
             hidden_sizes = [hidden_sizes]
         self.advantage_hidden = MlpModel(input_size, hidden_sizes)
         self.advantage_out = torch.nn.Linear(hidden_sizes[-1],
-            output_size * n_atoms, bias=False)
+                                             output_size * n_atoms, bias=False)
         self.advantage_bias = torch.nn.Parameter(torch.zeros(n_atoms))
         self.value = MlpModel(input_size, hidden_sizes, output_size=n_atoms)
         self._grad_scale = grad_scale

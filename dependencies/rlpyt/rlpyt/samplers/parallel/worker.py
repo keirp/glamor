@@ -23,7 +23,7 @@ def initialize_worker(rank, seed=None, cpu=None, torch_threads=None):
         cpu_affin = "UNAVAILABLE MacOS"
     log_str += f", CPU affinity {cpu_affin}"
     torch_threads = (1 if torch_threads is None and cpu is not None else
-        torch_threads)  # Default to 1 to avoid possible MKL hang.
+                     torch_threads)  # Default to 1 to avoid possible MKL hang.
     if torch_threads is not None:
         torch.set_num_threads(torch_threads)
     log_str += f", Torch threads {torch.get_num_threads()}"
@@ -66,7 +66,8 @@ def sampling_process(common_kwargs, worker_kwargs):
     collector.start_agent()
 
     if c.get("eval_n_envs", 0) > 0:
-        eval_envs = [c.EnvCls(**c.eval_env_kwargs) for _ in range(c.eval_n_envs)]
+        eval_envs = [c.EnvCls(**c.eval_env_kwargs)
+                     for _ in range(c.eval_n_envs)]
         set_envs_seeds(eval_envs, w.seed)
         eval_collector = c.eval_CollectorCls(
             rank=w.rank,
@@ -89,7 +90,8 @@ def sampling_process(common_kwargs, worker_kwargs):
         if ctrl.quit.value:
             break
         if ctrl.do_eval.value:
-            eval_collector.collect_evaluation(ctrl.itr.value)  # Traj_infos to queue inside.
+            # Traj_infos to queue inside.
+            eval_collector.collect_evaluation(ctrl.itr.value)
         else:
             agent_inputs, traj_infos, completed_infos = collector.collect_batch(
                 agent_inputs, traj_infos, ctrl.itr.value)

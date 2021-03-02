@@ -2,7 +2,7 @@
 import numpy as np
 
 from rlpyt.samplers.parallel.gpu.action_server import (ActionServer,
-    AlternatingActionServer, NoOverlapAlternatingActionServer)
+                                                       AlternatingActionServer, NoOverlapAlternatingActionServer)
 from rlpyt.agents.base import AgentInputs
 
 
@@ -17,7 +17,7 @@ class AsyncActionServer(ActionServer):
         step_np, step_pyt = self.eval_step_buffer_np, self.eval_step_buffer_pyt
         self.agent.reset()
         agent_inputs = AgentInputs(step_pyt.observation, step_pyt.action,
-            step_pyt.reward)  # Fixed buffer objects.
+                                   step_pyt.reward)  # Fixed buffer objects.
 
         for t in range(self.eval_max_T):
             for b in obs_ready:
@@ -94,7 +94,6 @@ class AsyncAlternatingActionServer(AlternatingActionServer):
             assert not w.acquire(block=False)  # Debug check.
 
 
-
 class AsyncNoOverlapAlternatingActionServer(NoOverlapAlternatingActionServer):
     """Not tested, possibly faulty corner cases for synchronization."""
 
@@ -141,7 +140,8 @@ class AsyncNoOverlapAlternatingActionServer(NoOverlapAlternatingActionServer):
                     b.acquire()
                     # assert not b.acquire(block=False)  # Debug check.
                 if self.ctrl.stop_eval.value:  # Signal from sampler runner.
-                    self.sync.stop_eval.value = stop = True  # Signal to my workers.
+                    # Signal to my workers.
+                    self.sync.stop_eval.value = stop = True
                 for w in act_ready_pair[1 - alt]:
                     # assert not w.acquire(block=False)  # Debug check.
                     w.release()

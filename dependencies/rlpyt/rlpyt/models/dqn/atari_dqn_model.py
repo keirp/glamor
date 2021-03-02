@@ -24,7 +24,7 @@ class AtariDqnModel(torch.nn.Module):
             kernel_sizes=None,
             strides=None,
             paddings=None,
-            ):
+    ):
         """Instantiates the neural network according to arguments; network defaults
         stored within this method."""
         super().__init__()
@@ -60,7 +60,8 @@ class AtariDqnModel(torch.nn.Module):
         # Infer (presence of) leading dimensions: [T,B], [B], or [].
         lead_dim, T, B, img_shape = infer_leading_dims(img, 3)
 
-        conv_out = self.conv(img.view(T * B, *img_shape))  # Fold if T dimension.
+        # Fold if T dimension.
+        conv_out = self.conv(img.view(T * B, *img_shape))
         q = self.head(conv_out.view(T * B, -1))
 
         # Restore leading dimensions: [T,B], [B], or [], as input.

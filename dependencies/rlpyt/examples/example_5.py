@@ -33,7 +33,8 @@ def build_and_train(game="pong", run_ID=0, cuda_idx=None, n_parallel=2):
         eval_max_trajectories=5,
         # batch_T=4,  # Get from config.
         # batch_B=1,
-        **config["sampler"]  # More parallel environments for batched forward-pass.
+        # More parallel environments for batched forward-pass.
+        **config["sampler"]
     )
     algo = DQN(**config["algo"])  # Run with defaults.
     agent = AtariDqnAgent()
@@ -53,11 +54,15 @@ def build_and_train(game="pong", run_ID=0, cuda_idx=None, n_parallel=2):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--game', help='Atari game', default='pong')
-    parser.add_argument('--run_ID', help='run identifier (logging)', type=int, default=0)
-    parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=None)
-    parser.add_argument('--n_parallel', help='number of sampler workers', type=int, default=2)
+    parser.add_argument(
+        '--run_ID', help='run identifier (logging)', type=int, default=0)
+    parser.add_argument('--cuda_idx', help='gpu to use ',
+                        type=int, default=None)
+    parser.add_argument(
+        '--n_parallel', help='number of sampler workers', type=int, default=2)
     args = parser.parse_args()
     build_and_train(
         game=args.game,

@@ -5,7 +5,7 @@ import time
 
 from rlpyt.samplers.parallel.base import ParallelSamplerBase
 from rlpyt.samplers.parallel.cpu.collectors import (CpuResetCollector,
-    CpuEvalCollector)
+                                                    CpuEvalCollector)
 
 
 class CpuSampler(ParallelSamplerBase):
@@ -14,10 +14,10 @@ class CpuSampler(ParallelSamplerBase):
     """
 
     def __init__(self, *args, CollectorCls=CpuResetCollector,
-            eval_CollectorCls=CpuEvalCollector, **kwargs):
+                 eval_CollectorCls=CpuEvalCollector, **kwargs):
         # e.g. or use CpuWaitResetCollector, etc...
         super().__init__(*args, CollectorCls=CollectorCls,
-            eval_CollectorCls=eval_CollectorCls, **kwargs)
+                         eval_CollectorCls=eval_CollectorCls, **kwargs)
 
     def obtain_samples(self, itr):
         """First, have the agent sync shared memory; in case training uses a

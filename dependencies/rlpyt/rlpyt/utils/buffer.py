@@ -5,18 +5,18 @@ import ctypes
 import torch
 
 from rlpyt.utils.collections import (NamedArrayTuple, namedarraytuple_like,
-    NamedArrayTupleSchema_like, NamedTuple)
+                                     NamedArrayTupleSchema_like, NamedTuple)
 
 
 def buffer_from_example(example, leading_dims, share_memory=False,
-        use_NatSchema=None):
+                        use_NatSchema=None):
     """Allocates memory and returns it in `namedarraytuple` with same
     structure as ``examples``, which should be a `namedtuple` or
     `namedarraytuple`. Applies the same leading dimensions ``leading_dims`` to
     every entry, and otherwise matches their shapes and dtypes. The examples
     should have no leading dimensions.  ``None`` fields will stay ``None``.
     Optionally allocate on OS shared memory. Uses ``build_array()``.
-    
+
     New: can use NamedArrayTuple types by the `use_NatSchema` flag, which
     may be easier for pickling/unpickling when using spawn instead
     of fork. If use_NatSchema is None, the type of ``example`` will be used to
@@ -34,8 +34,8 @@ def buffer_from_example(example, leading_dims, share_memory=False,
     except TypeError:  # example was not a namedtuple or namedarraytuple
         return build_array(example, leading_dims, share_memory)
     return buffer_type(*(buffer_from_example(v, leading_dims,
-        share_memory=share_memory, use_NatSchema=use_NatSchema)
-        for v in example))
+                                             share_memory=share_memory, use_NatSchema=use_NatSchema)
+                         for v in example))
 
 
 def build_array(example, leading_dims, share_memory=False):
@@ -45,7 +45,8 @@ def build_array(example, leading_dims, share_memory=False):
     """
     a = np.asarray(example)
     if a.dtype == "object":
-        raise TypeError("Buffer example value cannot cast as np.dtype==object.")
+        raise TypeError(
+            "Buffer example value cannot cast as np.dtype==object.")
     constructor = np_mp_array if share_memory else np.zeros
     if not isinstance(leading_dims, (list, tuple)):
         leading_dims = (leading_dims,)
@@ -181,7 +182,8 @@ def buffer_method(buffer_, method_name, *args, **kwargs):
         return
     if isinstance(buffer_, (torch.Tensor, np.ndarray)):
         return getattr(buffer_, method_name)(*args, **kwargs)
-    contents = tuple(buffer_method(b, method_name, *args, **kwargs) for b in buffer_)
+    contents = tuple(buffer_method(b, method_name, *args, **kwargs)
+                     for b in buffer_)
     if type(buffer_) is tuple:
         return contents
     return buffer_._make(contents)
@@ -214,7 +216,8 @@ def get_leading_dims(buffer_, n_dim=1):
         return
     if isinstance(buffer_, (torch.Tensor, np.ndarray)):
         return buffer_.shape[:n_dim]
-    contents = tuple(get_leading_dims(b, n_dim) for b in buffer_ if b is not None)
+    contents = tuple(get_leading_dims(b, n_dim)
+                     for b in buffer_ if b is not None)
     if not len(set(contents)) == 1:
         raise ValueError(f"Found mismatched leading dimensions: {contents}")
     return contents[0]

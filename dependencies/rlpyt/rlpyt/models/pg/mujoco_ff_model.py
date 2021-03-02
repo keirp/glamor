@@ -25,7 +25,7 @@ class MujocoFfModel(torch.nn.Module):
             normalize_observation=False,
             norm_obs_clip=10,
             norm_obs_var_clip=1e-6,
-            ):
+    ):
         """Instantiate neural net modules according to inputs."""
         super().__init__()
         self._obs_ndim = len(observation_shape)
@@ -47,7 +47,8 @@ class MujocoFfModel(torch.nn.Module):
             output_size=1,
             nonlinearity=hidden_nonlinearity,
         )
-        self.log_std = torch.nn.Parameter(init_log_std * torch.ones(action_size))
+        self.log_std = torch.nn.Parameter(
+            init_log_std * torch.ones(action_size))
         if normalize_observation:
             self.obs_rms = RunningMeanStdModel(observation_shape)
             self.norm_obs_clip = norm_obs_clip
@@ -70,7 +71,7 @@ class MujocoFfModel(torch.nn.Module):
             if self.norm_obs_var_clip is not None:
                 obs_var = torch.clamp(obs_var, min=self.norm_obs_var_clip)
             observation = torch.clamp((observation - self.obs_rms.mean) /
-                obs_var.sqrt(), -self.norm_obs_clip, self.norm_obs_clip)
+                                      obs_var.sqrt(), -self.norm_obs_clip, self.norm_obs_clip)
 
         obs_flat = observation.view(T * B, -1)
         mu = self.mu(obs_flat)

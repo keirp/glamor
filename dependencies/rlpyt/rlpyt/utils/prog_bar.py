@@ -30,4 +30,4 @@ class ProgBarCounter:
 
     def stop(self):
         if self.pbar is not None and self.pbar.active:
-                self.pbar.stop()
+            self.pbar.stop()

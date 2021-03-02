@@ -72,4 +72,3 @@ configs["monolithic_uniformframe"] = config
 config = copy.deepcopy(configs["dqn"])
 config["algo"]["replay_buffer"] = "uniform_noframe"
 configs["uniform_noframe"] = config
-

@@ -8,8 +8,8 @@ from rlpyt.utils.misc import extract_sequences
 from rlpyt.utils.collections import namedarraytuple
 
 SamplesFromReplay = namedarraytuple("SamplesFromReplay",
-    ["all_observation", "all_action", "all_reward", "return_", "done", "done_n",
-    "init_rnn_state"])
+                                    ["all_observation", "all_action", "all_reward", "return_", "done", "done_n",
+                                     "init_rnn_state"])
 
 SamplesToBuffer = None
 
@@ -26,7 +26,8 @@ class SequenceNStepReturnBuffer(BaseNStepReturnBuffer):
 
     def __init__(self, example, size, B, rnn_state_interval, batch_T=None, **kwargs):
         self.rnn_state_interval = rnn_state_interval
-        self.batch_T = batch_T  # Maybe required fixed depending on replay type.
+        # Maybe required fixed depending on replay type.
+        self.batch_T = batch_T
         if rnn_state_interval <= 1:  # Store no rnn state or every rnn state.
             buffer_example = example
         else:
@@ -35,12 +36,13 @@ class SequenceNStepReturnBuffer(BaseNStepReturnBuffer):
             global SamplesToBuffer
             SamplesToBuffer = namedarraytuple("SamplesToBuffer", field_names)
             buffer_example = SamplesToBuffer(*(v for k, v in example.items()
-                if k != "prev_rnn_state"))
+                                               if k != "prev_rnn_state"))
             size = B * rnn_state_interval * math.ceil(  # T as multiple of interval.
                 math.ceil(size / B) / rnn_state_interval)
             self.samples_prev_rnn_state = buffer_from_example(example.prev_rnn_state,
-                (size // (B * rnn_state_interval), B),
-                share_memory=self.async_)
+                                                              (size // (B *
+                                                                        rnn_state_interval), B),
+                                                              share_memory=self.async_)
         super().__init__(example=buffer_example, size=size, B=B, **kwargs)
         if rnn_state_interval > 1:
             assert self.T % rnn_state_interval == 0
@@ -54,7 +56,7 @@ class SequenceNStepReturnBuffer(BaseNStepReturnBuffer):
         if rsi <= 1:  # All or no rnn states stored.
             return super().append_samples(samples)
         buffer_samples = SamplesToBuffer(*(v for k, v in samples.items()
-            if k != "prev_rnn_state"))
+                                           if k != "prev_rnn_state"))
         T, idxs = super().append_samples(buffer_samples)
         start, stop = math.ceil(t / rsi), ((t + T - 1) // rsi) + 1
         offset = (rsi - t) % rsi
@@ -86,15 +88,16 @@ class SequenceNStepReturnBuffer(BaseNStepReturnBuffer):
             init_rnn_state = None
         batch = SamplesFromReplay(
             all_observation=self.extract_observation(T_idxs, B_idxs,
-                T + self.n_step_return),
+                                                     T + self.n_step_return),
             all_action=buffer_func(s.action, extract_sequences, T_idxs - 1, B_idxs,
-                T + self.n_step_return),  # Starts at prev_action.
+                                   T + self.n_step_return),  # Starts at prev_action.
             all_reward=extract_sequences(s.reward, T_idxs - 1, B_idxs,
-                T + self.n_step_return),  # Only prev_reward (agent + target).
+                                         T + self.n_step_return),  # Only prev_reward (agent + target).
             return_=extract_sequences(self.samples_return_, T_idxs, B_idxs, T),
             done=extract_sequences(s.done, T_idxs, B_idxs, T),
             done_n=extract_sequences(self.samples_done_n, T_idxs, B_idxs, T),
-            init_rnn_state=init_rnn_state,  # (Same state for agent and target.)
+            # (Same state for agent and target.)
+            init_rnn_state=init_rnn_state,
         )
         # NOTE: Algo might need to make zero prev_action/prev_reward depending on done.
         return torchify_buffer(batch)
@@ -102,4 +105,4 @@ class SequenceNStepReturnBuffer(BaseNStepReturnBuffer):
     def extract_observation(self, T_idxs, B_idxs, T):
         """Generalization anticipating frame-buffer."""
         return buffer_func(self.samples.observation, extract_sequences,
-            T_idxs, B_idxs, T)
+                           T_idxs, B_idxs, T)

@@ -2,7 +2,7 @@
 import numpy as np
 
 from rlpyt.samplers.collectors import (DecorrelatingStartCollector,
-    BaseEvalCollector)
+                                       BaseEvalCollector)
 from rlpyt.utils.buffer import buffer_method
 
 
@@ -30,7 +30,7 @@ class GpuResetCollector(DecorrelatingStartCollector):
             for b, env in enumerate(self.envs):
                 o, r, d, env_info = env.step(step.action[b])
                 traj_infos[b].step(step.observation[b], step.action[b], r, d,
-                    step.agent_info[b], env_info)
+                                   step.agent_info[b], env_info)
                 if getattr(env_info, "traj_done", d):
                     completed_infos.append(traj_infos[b].terminate(o))
                     traj_infos[b] = self.TrajInfoCls()
@@ -65,7 +65,8 @@ class GpuWaitResetCollector(DecorrelatingStartCollector):
         # e.g. For episodic lives, hold the observation output when done, record
         # blanks for the rest of the batch, but reinstate the observation to start
         # next batch.
-        self.temp_observation = buffer_method(self.step_buffer_np.observation, "copy")
+        self.temp_observation = buffer_method(
+            self.step_buffer_np.observation, "copy")
 
     def collect_batch(self, agent_inputs, traj_infos, itr):
         """Params agent_inputs and itr unused."""
@@ -92,13 +93,14 @@ class GpuWaitResetCollector(DecorrelatingStartCollector):
                     continue
                 o, r, d, env_info = env.step(step.action[b])
                 traj_infos[b].step(step.observation[b], step.action[b], r, d,
-                    step.agent_info[b], env_info)
+                                   step.agent_info[b], env_info)
                 if getattr(env_info, "traj_done", d):
                     completed_infos.append(traj_infos[b].terminate(o))
                     traj_infos[b] = self.TrajInfoCls()
                     self.need_reset[b] = True
                 if d:
-                    self.temp_observation[b] = o  # Store until start of next batch.
+                    # Store until start of next batch.
+                    self.temp_observation[b] = o
                     o = 0  # Record blank.
                 step.observation[b] = o
                 step.reward[b] = r
@@ -149,7 +151,7 @@ class GpuEvalCollector(BaseEvalCollector):
             for b, env in enumerate(self.envs):
                 o, r, d, env_info = env.step(step.action[b])
                 traj_infos[b].step(step.observation[b], step.action[b], r, d,
-                    step.agent_info[b], env_info)
+                                   step.agent_info[b], env_info)
                 if getattr(env_info, "traj_done", d):
                     self.traj_infos_queue.put(traj_infos[b].terminate(o))
                     traj_infos[b] = self.TrajInfoCls()

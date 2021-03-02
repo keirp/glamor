@@ -80,7 +80,7 @@ class CategoricalDQN(DQN):
 
         target_p = torch.clamp(target_p, EPS, 1)
         KL_div = torch.sum(target_p *
-            (torch.log(target_p) - torch.log(p.detach())), dim=1)
+                           (torch.log(target_p) - torch.log(p.detach())), dim=1)
         KL_div = torch.clamp(KL_div, EPS, 1 / EPS)  # Avoid <0 from NaN-guard.
 
         if not self.mid_batch_reset:

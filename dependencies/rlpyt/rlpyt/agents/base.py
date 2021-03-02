@@ -10,7 +10,7 @@ from rlpyt.utils.logging import logger
 from rlpyt.models.utils import strip_ddp_state_dict
 
 AgentInputs = namedarraytuple("AgentInputs",
-    ["observation", "prev_action", "prev_reward"])
+                              ["observation", "prev_action", "prev_reward"])
 AgentStep = namedarraytuple("AgentStep", ["action", "agent_info"])
 
 
@@ -29,7 +29,7 @@ class BaseAgent:
     need to extend certain funcionality to include those models, depending on
     how they are used.
     """
-    
+
     recurrent = False
     alternating = False
 
@@ -81,7 +81,7 @@ class BaseAgent:
         """
         self.env_model_kwargs = self.make_env_to_model_kwargs(env_spaces)
         self.model = self.ModelCls(**self.env_model_kwargs,
-            **self.model_kwargs)
+                                   **self.model_kwargs)
         if share_memory:
             self.model.share_memory()
             # Store the shared_model (CPU) under a separate name, in case the
@@ -109,7 +109,7 @@ class BaseAgent:
             return
         if self.shared_model is not None:
             self.model = self.ModelCls(**self.env_model_kwargs,
-                **self.model_kwargs)
+                                       **self.model_kwargs)
             self.model.load_state_dict(self.shared_model.state_dict())
         self.device = torch.device("cuda", index=cuda_idx)
         self.model.to(self.device)
@@ -132,7 +132,7 @@ class BaseAgent:
             output_device=device_id,
         )
         logger.log("Initialized DistributedDataParallel agent model on "
-            f"device {self.device}.")
+                   f"device {self.device}.")
         return device_id
 
     def async_cpu(self, share_memory=True):
@@ -152,7 +152,7 @@ class BaseAgent:
             return
         assert self.shared_model is not None
         self.model = self.ModelCls(**self.env_model_kwargs,
-            **self.model_kwargs)
+                                   **self.model_kwargs)
         # TODO: might need strip_ddp_state_dict.
         self.model.load_state_dict(self.shared_model.state_dict())
         if share_memory:  # Not needed in async_serial.
@@ -242,11 +242,12 @@ class BaseAgent:
                     self._recv_count = self._send_count.value
 
     def toggle_alt(self):
-        pass  # Only needed for recurrent alternating agent, but might get called.
+        # Only needed for recurrent alternating agent, but might get called.
+        pass
 
 
 AgentInputsRnn = namedarraytuple("AgentInputsRnn",  # Training only.
-    ["observation", "prev_action", "prev_reward", "init_rnn_state"])
+                                 ["observation", "prev_action", "prev_reward", "init_rnn_state"])
 
 
 class RecurrentAgentMixin:
@@ -272,7 +273,8 @@ class RecurrentAgentMixin:
         to zero.  Assumes rnn state is in cudnn-compatible shape: [N,B,H],
         where B corresponds to environment index."""
         if self._prev_rnn_state is not None:
-            self._prev_rnn_state[:, idx] = 0  # Automatic recursion in namedarraytuple.
+            # Automatic recursion in namedarraytuple.
+            self._prev_rnn_state[:, idx] = 0
 
     def advance_rnn_state(self, new_rnn_state):
         """Sets the recurrent state to the newly computed one (i.e. recurrent agents should

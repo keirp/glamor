@@ -24,19 +24,19 @@ class DqnAgent(EpsilonGreedyAgentMixin, BaseAgent):
         """Returns Q-values for states/observations (with grad)."""
         prev_action = self.distribution.to_onehot(prev_action)
         model_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         q = self.model(*model_inputs)
         return q.cpu()
 
     def initialize(self, env_spaces, share_memory=False,
-            global_B=1, env_ranks=None):
+                   global_B=1, env_ranks=None):
         """Along with standard initialization, creates vector-valued epsilon
         for exploration, if applicable, with a different epsilon for each
         environment instance."""
         super().initialize(env_spaces, share_memory,
-            global_B=global_B, env_ranks=env_ranks)
+                           global_B=global_B, env_ranks=env_ranks)
         self.target_model = self.ModelCls(**self.env_model_kwargs,
-            **self.model_kwargs)
+                                          **self.model_kwargs)
         self.target_model.load_state_dict(self.model.state_dict())
         self.distribution = EpsilonGreedy(dim=env_spaces.action.n)
         if env_ranks is not None:
@@ -48,7 +48,7 @@ class DqnAgent(EpsilonGreedyAgentMixin, BaseAgent):
 
     def state_dict(self):
         return dict(model=self.model.state_dict(),
-            target=self.target_model.state_dict())
+                    target=self.target_model.state_dict())
 
     @torch.no_grad()
     def step(self, observation, prev_action, prev_reward):
@@ -56,7 +56,7 @@ class DqnAgent(EpsilonGreedyAgentMixin, BaseAgent):
         epsilon-greedy. (no grad)"""
         prev_action = self.distribution.to_onehot(prev_action)
         model_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         q = self.model(*model_inputs)
         q = q.cpu()
         action = self.distribution.sample(q)
@@ -68,7 +68,7 @@ class DqnAgent(EpsilonGreedyAgentMixin, BaseAgent):
         """Returns the target Q-values for states/observations."""
         prev_action = self.distribution.to_onehot(prev_action)
         model_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         target_q = self.target_model(*model_inputs)
         return target_q.cpu()
 

@@ -22,7 +22,7 @@ def discount_return(reward, done, bootstrap_value, discount, return_dest=None):
 
 
 def generalized_advantage_estimation(reward, value, done, bootstrap_value,
-        discount, gae_lambda, advantage_dest=None, return_dest=None):
+                                     discount, gae_lambda, advantage_dest=None, return_dest=None):
     """Time-major inputs, optional other dimensions: [T], [T,B], etc.  Similar
     to `discount_return()` but using Generalized Advantage Estimation to
     compute advantages and returns."""
@@ -32,7 +32,8 @@ def generalized_advantage_estimation(reward, value, done, bootstrap_value,
         reward.shape, dtype=reward.dtype)
     nd = 1 - done
     nd = nd.type(reward.dtype) if isinstance(nd, torch.Tensor) else nd
-    advantage[-1] = reward[-1] + discount * bootstrap_value * nd[-1] - value[-1]
+    advantage[-1] = reward[-1] + discount * \
+        bootstrap_value * nd[-1] - value[-1]
     for t in reversed(range(len(reward) - 1)):
         delta = reward[t] + discount * value[t + 1] * nd[t] - value[t]
         advantage[t] = delta + discount * gae_lambda * nd[t] * advantage[t + 1]
@@ -65,7 +66,7 @@ def generalized_advantage_estimation(reward, value, done, bootstrap_value,
 
 
 def discount_return_n_step(reward, done, n_step, discount, return_dest=None,
-        done_n_dest=None, do_truncated=False):
+                           done_n_dest=None, do_truncated=False):
     """Time-major inputs, optional other dimension: [T], [T,B], etc.  Computes
     n-step discounted returns within the timeframe of the of given rewards. If
     `do_truncated==False`, then only compute at time-steps with full n-step
@@ -90,12 +91,14 @@ def discount_return_n_step(reward, done, n_step, discount, return_dest=None,
     if n_step > 1:
         if do_truncated:
             for n in range(1, n_step):
-                return_[:-n] += (discount ** n) * reward[n:n + rlen] * (1 - done_n[:-n])
+                return_[:-n] += (discount ** n) * \
+                    reward[n:n + rlen] * (1 - done_n[:-n])
                 done_n[:-n] = np.maximum(done_n[:-n], done[n:n + rlen])
         else:
             for n in range(1, n_step):
                 return_ += (discount ** n) * reward[n:n + rlen] * (1 - done_n)
-                done_n = np.maximum(done_n, done[n:n + rlen])  # Supports tensors.
+                # Supports tensors.
+                done_n = np.maximum(done_n, done[n:n + rlen])
     if is_torch:
         done_n = done_n.type(done_dtype)
     return return_, done_n
@@ -116,13 +119,14 @@ def valid_from_done(done):
 # Removed from PG base algo. (around 2019-09-16)
 
 def discount_return_tl(reward, done, bootstrap_value, discount, timeout, value,
-        return_dest=None):
+                       return_dest=None):
     """Like discount_return(), above, except uses bootstrapping where 'done'
     is due to env horizon time-limit (tl=Time-Limit).  (In the algo, should
     not train on samples where `timeout=True`.)"""
     return_ = return_dest if return_dest is not None else zeros(
         reward.shape, dtype=reward.dtype)
-    assert all(done[timeout])  # Anywhere timeout, was done (timeout is bool dtype).
+    # Anywhere timeout, was done (timeout is bool dtype).
+    assert all(done[timeout])
     nd = 1 - done
     nd = nd.type(reward.dtype) if isinstance(nd, torch.Tensor) else nd
     return_[-1] = reward[-1] + discount * bootstrap_value * nd[-1]
@@ -136,7 +140,7 @@ def discount_return_tl(reward, done, bootstrap_value, discount, timeout, value,
 
 
 def generalized_advantage_estimation_tl(reward, value, done, bootstrap_value,
-        discount, gae_lambda, timeout, advantage_dest=None, return_dest=None):
+                                        discount, gae_lambda, timeout, advantage_dest=None, return_dest=None):
     """Like generalized_advantage_estimation(), above, except uses
     bootstrapping where 'done' is due to env horizon time-limit
     (tl=Time-Limit).  (In the algo, should not train on samples where
@@ -148,7 +152,8 @@ def generalized_advantage_estimation_tl(reward, value, done, bootstrap_value,
     assert all(done[timeout])  # timeout is bool dtype.
     nd = 1 - done
     nd = nd.type(reward.dtype) if isinstance(nd, torch.Tensor) else nd
-    advantage[-1] = reward[-1] + discount * bootstrap_value * nd[-1] - value[-1]
+    advantage[-1] = reward[-1] + discount * \
+        bootstrap_value * nd[-1] - value[-1]
     for t in reversed(range(len(reward) - 1)):
         delta = reward[t] + discount * value[t + 1] * nd[t] - value[t]
         advantage[t] = delta + discount * gae_lambda * nd[t] * advantage[t + 1]
@@ -157,6 +162,6 @@ def generalized_advantage_estimation_tl(reward, value, done, bootstrap_value,
         # because don't have valid next_state for bootstrap_value(next_state).
         tt = timeout[t + 1]
         advantage[t][tt] = (reward[t][tt] +  # Same formula before loop.
-            discount * value[t + 1][tt] - value[t][tt])
+                            discount * value[t + 1][tt] - value[t][tt])
     return_[:] = advantage + value
     return advantage, return_

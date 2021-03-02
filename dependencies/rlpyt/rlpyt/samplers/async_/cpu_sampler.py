@@ -22,9 +22,9 @@ class AsyncCpuSampler(AsyncParallelSamplerMixin, ParallelSamplerBase):
     """
 
     def __init__(self, *args, CollectorCls=DbCpuResetCollector,
-            eval_CollectorCls=CpuEvalCollector, **kwargs):
+                 eval_CollectorCls=CpuEvalCollector, **kwargs):
         super().__init__(*args, CollectorCls=CollectorCls,
-            eval_CollectorCls=eval_CollectorCls, **kwargs)
+                         eval_CollectorCls=eval_CollectorCls, **kwargs)
 
     ###########################################################################
     # Sampler runner methods (forked).

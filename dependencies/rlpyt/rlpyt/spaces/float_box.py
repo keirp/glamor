@@ -28,7 +28,7 @@ class FloatBox(Space):
     def sample(self):
         """Return a single sample from ``np.random.uniform``."""
         return np.asarray(np.random.uniform(low=self.low, high=self.high,
-            size=self.shape), dtype=self.dtype)
+                                            size=self.shape), dtype=self.dtype)
 
     def null_value(self):
         null = np.zeros(self.shape, dtype=self.dtype)

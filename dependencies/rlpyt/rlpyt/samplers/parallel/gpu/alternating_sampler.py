@@ -1,7 +1,7 @@
 
 from rlpyt.samplers.parallel.gpu.sampler import GpuSamplerBase
 from rlpyt.samplers.parallel.gpu.action_server import (AlternatingActionServer,
-    NoOverlapAlternatingActionServer)
+                                                       NoOverlapAlternatingActionServer)
 
 
 class AlternatingSamplerBase(GpuSamplerBase):
@@ -31,9 +31,11 @@ class AlternatingSamplerBase(GpuSamplerBase):
         """Like the super class's ``initialize()``, but creates additional set of
         synchronization and communication objects for the alternate workers."""
         if agent.recurrent and not agent.alternating:
-            raise TypeError("If agent is recurrent, must be 'alternating' to use here.")
+            raise TypeError(
+                "If agent is recurrent, must be 'alternating' to use here.")
         elif not agent.recurrent:
-            agent.alternating = True  # FF agent doesn't need special class, but tell it so.
+            # FF agent doesn't need special class, but tell it so.
+            agent.alternating = True
         examples = super().initialize(agent, *args, **kwargs)
         self._make_alternating_pairs()
         return examples
@@ -41,25 +43,31 @@ class AlternatingSamplerBase(GpuSamplerBase):
     def _make_alternating_pairs(self):
         half_w = self.n_worker // 2  # Half of workers.
         self.half_B = half_B = self.batch_spec.B // 2  # Half of envs.
-        self.obs_ready_pair = (self.sync.obs_ready[:half_w], self.sync.obs_ready[half_w:])
-        self.act_ready_pair = (self.sync.act_ready[:half_w], self.sync.act_ready[half_w:])
-        self.step_buffer_np_pair = (self.step_buffer_np[:half_B], self.step_buffer_np[half_B:])
-        self.agent_inputs_pair = (self.agent_inputs[:half_B], self.agent_inputs[half_B:])
+        self.obs_ready_pair = (
+            self.sync.obs_ready[:half_w], self.sync.obs_ready[half_w:])
+        self.act_ready_pair = (
+            self.sync.act_ready[:half_w], self.sync.act_ready[half_w:])
+        self.step_buffer_np_pair = (
+            self.step_buffer_np[:half_B], self.step_buffer_np[half_B:])
+        self.agent_inputs_pair = (
+            self.agent_inputs[:half_B], self.agent_inputs[half_B:])
         if self.eval_n_envs > 0:
             assert self.eval_n_envs % 2 == 0
             eval_half_B = self.eval_n_envs // 2
             self.eval_step_buffer_np_pair = (self.eval_step_buffer_np[:eval_half_B],
-                self.eval_step_buffer_np[eval_half_B:])
+                                             self.eval_step_buffer_np[eval_half_B:])
             self.eval_agent_inputs_pair = (self.eval_agent_inputs[:eval_half_B],
-                self.eval_agent_inputs[eval_half_B:])
+                                           self.eval_agent_inputs[eval_half_B:])
         if "bootstrap_value" in self.samples_np.agent:
             self.bootstrap_value_pair = (self.samples_np.agent.bootstrap_value[0, :half_B],
-                self.samples_np.agent.bootstrap_value[0, half_B:])  # (leading dim T=1)
+                                         self.samples_np.agent.bootstrap_value[0, half_B:])  # (leading dim T=1)
 
     def _get_n_envs_list(self, affinity=None, n_worker=None, B=None):
         if affinity is not None:
-            assert affinity.get("alternating", False), "Need alternating affinity."
-        n_worker = len(affinity["workers_cpus"]) if n_worker is None else n_worker
+            assert affinity.get(
+                "alternating", False), "Need alternating affinity."
+        n_worker = len(affinity["workers_cpus"]
+                       ) if n_worker is None else n_worker
         assert n_worker % 2 == 0, "Need even number workers."
         B = self.batch_spec.B if B is None else B
         assert B % 2 == 0
@@ -79,5 +87,5 @@ class AlternatingSampler(AlternatingActionServer, AlternatingSamplerBase):
 
 
 class NoOverlapAlternatingSampler(NoOverlapAlternatingActionServer,
-        AlternatingSamplerBase):
+                                  AlternatingSamplerBase):
     pass

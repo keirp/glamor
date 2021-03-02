@@ -26,7 +26,7 @@ class CppoModel(torch.nn.Module):
             init_log_std=0.,
             normalize_observation=True,
             var_clip=1e-6,
-            ):
+    ):
         super().__init__()
         if hidden_nonlinearity == "tanh":  # So these can be strings in config file.
             hidden_nonlinearity = torch.nn.Tanh
@@ -65,7 +65,7 @@ class CppoModel(torch.nn.Module):
         else:
             self.constraint = None
         self.log_std = torch.nn.Parameter(init_log_std *
-            torch.ones(action_size))
+                                          torch.ones(action_size))
         self._lstm_skip = lstm_skip
         if normalize_observation:
             self.obs_rms = RunningMeanStdModel(observation_shape)
@@ -79,18 +79,19 @@ class CppoModel(torch.nn.Module):
             if self.var_clip is not None:
                 obs_var = torch.clamp(obs_var, min=self.var_clip)
             observation = torch.clamp((observation - self.obs_rms.mean) /
-                obs_var.sqrt(), -10, 10)
+                                      obs_var.sqrt(), -10, 10)
         fc_x = self.body(observation.view(T * B, -1))
         if self.lstm is not None:
             lstm_inputs = [fc_x, prev_action, prev_reward]
             lstm_input = torch.cat([x.view(T, B, -1) for x in lstm_inputs],
-                dim=2)
+                                   dim=2)
             # lstm_input = torch.cat([
             #     fc_x.view(T, B, -1),
             #     prev_action.view(T, B, -1),
             #     prev_reward.view(T, B, -1),
             #     ], dim=2)
-            init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
+            init_rnn_state = None if init_rnn_state is None else tuple(
+                init_rnn_state)
             lstm_out, (hn, cn) = self.lstm(lstm_input, init_rnn_state)
             lstm_out = lstm_out.view(T * B, -1)
             if self._lstm_skip:

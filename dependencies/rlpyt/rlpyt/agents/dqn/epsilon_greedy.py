@@ -27,14 +27,15 @@ class EpsilonGreedyAgentMixin:
             eps_eval=0.001,
             *args,
             **kwargs
-            ):
+    ):
         """Saves input arguments.  ``eps_final_min`` other than ``None`` will use 
         vector-valued epsilon, log-spaced."""
         super().__init__(*args, **kwargs)
         save__init__args(locals())
         self._eps_final_scalar = eps_final  # In case multiple vec_eps calls.
         self._eps_init_scalar = eps_init
-        self._eps_itr_min_max = np_mp_array(2, "int")  # Shared memory for CpuSampler
+        self._eps_itr_min_max = np_mp_array(
+            2, "int")  # Shared memory for CpuSampler
         self._eps_itr_min_max[0] = eps_itr_min
         self._eps_itr_min_max[1] = eps_itr_max
 
@@ -65,7 +66,7 @@ class EpsilonGreedyAgentMixin:
     def set_epsilon_itr_min_max(self, eps_itr_min, eps_itr_max):
         # Beginning and end of linear ramp down of epsilon.
         logger.log(f"Agent setting min/max epsilon itrs: {eps_itr_min}, "
-            f"{eps_itr_max}")
+                   f"{eps_itr_max}")
         self.eps_itr_min = eps_itr_min
         self.eps_itr_max = eps_itr_max
         self._eps_itr_min_max[0] = eps_itr_min  # Shared memory for CpuSampler
@@ -104,10 +105,11 @@ class EpsilonGreedyAgentMixin:
         itr_max = self._eps_itr_min_max[1]
         if itr <= itr_max:
             prog = min(1, max(0, itr - itr_min) / (itr_max - itr_min))
-            self.eps_sample = prog * self.eps_final + (1 - prog) * self.eps_init
+            self.eps_sample = prog * self.eps_final + \
+                (1 - prog) * self.eps_init
             if itr % (itr_max // 10) == 0 or itr == itr_max:
                 logger.log(f"Agent at itr {itr}, sample eps {self.eps_sample}"
-                    f" (min itr: {itr_min}, max_itr: {itr_max})")
+                           f" (min itr: {itr_min}, max_itr: {itr_max})")
         self.distribution.set_epsilon(self.eps_sample)
 
     # def sample_mode(self, itr):
@@ -122,7 +124,7 @@ class EpsilonGreedyAgentMixin:
         pre-training eval."""
         super().eval_mode(itr)
         logger.log(f"Agent at itr {itr}, eval eps "
-            f"{self.eps_eval if itr > 0 else 1.}")
+                   f"{self.eps_eval if itr > 0 else 1.}")
         self.distribution.set_epsilon(self.eps_eval if itr > 0 else 1.)
 
     # def eval_mode(self, itr):

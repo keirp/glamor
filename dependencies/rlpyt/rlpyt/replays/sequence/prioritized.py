@@ -2,7 +2,7 @@
 import math
 
 from rlpyt.replays.sequence.n_step import (SequenceNStepReturnBuffer,
-    SamplesFromReplay)
+                                           SamplesFromReplay)
 from rlpyt.replays.async_ import AsyncReplayBufferMixin
 from rlpyt.replays.sum_tree import SumTree, AsyncSumTree
 from rlpyt.utils.collections import namedarraytuple
@@ -10,7 +10,7 @@ from rlpyt.utils.quick_args import save__init__args
 from rlpyt.utils.buffer import torchify_buffer, numpify_buffer
 
 SamplesFromReplayPri = namedarraytuple("SamplesFromReplayPri",
-    SamplesFromReplay._fields + ("is_weights",))
+                                       SamplesFromReplay._fields + ("is_weights",))
 
 
 class PrioritizedSequenceReplay:
@@ -47,7 +47,7 @@ class PrioritizedSequenceReplay:
     """
 
     def __init__(self, alpha=0.6, beta=0.4, default_priority=1, unique=False,
-            input_priorities=False, input_priority_shift=0, **kwargs):
+                 input_priorities=False, input_priority_shift=0, **kwargs):
         super().__init__(**kwargs)
         save__init__args(locals())
         assert self.batch_T is not None, "Must assign fixed batch_T for prioritized."
@@ -55,7 +55,8 @@ class PrioritizedSequenceReplay:
 
     def init_priority_tree(self):
         rsi = max(1, self.rnn_state_interval)
-        off_backward = math.ceil((1 + self.off_backward + self.batch_T) / rsi)  # +1 in case interval aligned? TODO: check
+        # +1 in case interval aligned? TODO: check
+        off_backward = math.ceil((1 + self.off_backward + self.batch_T) / rsi)
         SumTreeCls = AsyncSumTree if self.async_ else SumTree
         self.priority_tree = SumTreeCls(
             T=self.T // rsi,
@@ -88,7 +89,8 @@ class PrioritizedSequenceReplay:
             # Let scalar or [B]-shaped priorities pass in, will broadcast.
             if priorities is not None and priorities.ndim == 2:  # [T, B]
                 offset = (rsi - t) % rsi
-                priorities = priorities[offset::rsi]  # Select out same t as rnn.
+                # Select out same t as rnn.
+                priorities = priorities[offset::rsi]
                 # Possibly untested.
             n = self.t // rsi - t // rsi
             if self.t < t:  # Wrapped.
@@ -116,10 +118,10 @@ class PrioritizedSequenceReplay:
 
 
 class PrioritizedSequenceReplayBuffer(PrioritizedSequenceReplay,
-        SequenceNStepReturnBuffer):
+                                      SequenceNStepReturnBuffer):
     pass
 
 
 class AsyncPrioritizedSequenceReplayBuffer(AsyncReplayBufferMixin,
-        PrioritizedSequenceReplay):
+                                           PrioritizedSequenceReplay):
     pass

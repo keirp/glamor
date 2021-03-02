@@ -17,7 +17,7 @@ class AsyncSamplerMixin:
     ###########################################################################
 
     def async_initialize(self, agent, bootstrap_value=False,
-            traj_info_kwargs=None, seed=None):
+                         traj_info_kwargs=None, seed=None):
         """Instantiate an example environment and use it to initialize the
         agent (on shared memory).  Pre-allocate a double-buffer for sample
         batches, and return that buffer along with example data (e.g.
@@ -28,19 +28,20 @@ class AsyncSamplerMixin:
         env = self.EnvCls(**self.env_kwargs)
         # Sampler always receives new params through shared memory:
         agent.initialize(env.spaces, share_memory=True,
-            global_B=self.batch_spec.B, env_ranks=list(range(self.batch_spec.B)))
+                         global_B=self.batch_spec.B, env_ranks=list(range(self.batch_spec.B)))
         _, samples_np, examples = build_samples_buffer(agent, env,
-            self.batch_spec, bootstrap_value, agent_shared=True, env_shared=True,
-            subprocess=True)  # Would like subprocess=True, but might hang?
+                                                       self.batch_spec, bootstrap_value, agent_shared=True, env_shared=True,
+                                                       subprocess=True)  # Would like subprocess=True, but might hang?
         _, samples_np2, _ = build_samples_buffer(agent, env, self.batch_spec,
-            bootstrap_value, agent_shared=True, env_shared=True, subprocess=True)
+                                                 bootstrap_value, agent_shared=True, env_shared=True, subprocess=True)
         env.close()
         del env
         if traj_info_kwargs:
             for k, v in traj_info_kwargs.items():
                 setattr(self.TrajInfoCls, "_" + k, v)
         self.double_buffer = double_buffer = (samples_np, samples_np2)
-        self.samples_np = samples_np  # In case leftover use during worker init.
+        # In case leftover use during worker init.
+        self.samples_np = samples_np
         self.examples = examples
         self.agent = agent
         return double_buffer, examples
@@ -84,12 +85,12 @@ class AsyncParallelSamplerMixin(AsyncSamplerMixin):
 
     def _assemble_workers_kwargs(self, affinity, seed, n_envs_list):
         workers_kwargs = super()._assemble_workers_kwargs(affinity, seed,
-            n_envs_list)
+                                                          n_envs_list)
         i_env = 0  # OK for GPU, because will already hold slice from global.
         for rank, w_kwargs in enumerate(workers_kwargs):
             n_envs = n_envs_list[rank]
             slice_B = slice(i_env, i_env + n_envs)
             w_kwargs["samples_np"] = tuple(buf[:, slice_B]
-                for buf in self.double_buffer)  # Replace.
+                                           for buf in self.double_buffer)  # Replace.
             i_env += n_envs
         return workers_kwargs

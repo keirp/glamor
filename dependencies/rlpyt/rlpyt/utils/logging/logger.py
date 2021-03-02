@@ -268,7 +268,8 @@ class TerminalTablePrinter:
 
 table_printer = TerminalTablePrinter()
 
-_tabular_headers = dict()  # keys are file_names and values are the keys of the header of that tabular file
+# keys are file_names and values are the keys of the header of that tabular file
+_tabular_headers = dict()
 
 
 def dump_tabular(*args, **kwargs):
@@ -297,19 +298,23 @@ def dump_tabular(*args, **kwargs):
                             rows = list(reader)
                             read_fd.close()
                             tabular_fd.close()
-                            tabular_fd = _tabular_fds[tabular_file_name] = open(tabular_file_name, 'w')
-                            new_writer = csv.DictWriter(tabular_fd, fieldnames=list(joint_keys))
+                            tabular_fd = _tabular_fds[tabular_file_name] = open(
+                                tabular_file_name, 'w')
+                            new_writer = csv.DictWriter(
+                                tabular_fd, fieldnames=list(joint_keys))
                             new_writer.writeheader()
                             for row in rows:
                                 for key in joint_keys:
                                     if key not in row:
                                         row[key] = np.nan
                             new_writer.writerows(rows)
-                            _tabular_headers[tabular_file_name] = list(joint_keys)
+                            _tabular_headers[tabular_file_name] = list(
+                                joint_keys)
                     else:
                         _tabular_headers[tabular_file_name] = keys
 
-                    writer = csv.DictWriter(tabular_fd, fieldnames=_tabular_headers[tabular_file_name])  # list(
+                    writer = csv.DictWriter(
+                        tabular_fd, fieldnames=_tabular_headers[tabular_file_name])  # list(
                     if wh or (wh is None and tabular_file_name not in _tabular_header_written):
                         writer.writeheader()
                         _tabular_header_written.add(tabular_file_name)
@@ -366,7 +371,8 @@ def log_parameters(log_file, args, classes):
             log_params[name] = params
         else:
             log_params[name] = getattr(cls, "__kwargs", dict())
-            log_params[name]["_name"] = cls.__module__ + "." + cls.__class__.__name__
+            log_params[name]["_name"] = cls.__module__ + \
+                "." + cls.__class__.__name__
     mkdir_p(os.path.dirname(log_file))
     with open(log_file, "w") as f:
         json.dump(log_params, f, indent=2, sort_keys=True)
@@ -380,7 +386,8 @@ def stub_to_json(stub_sth):
         data = dict()
         for k, v in stub_sth.kwargs.items():
             data[k] = stub_to_json(v)
-        data["_name"] = stub_sth.proxy_class.__module__ + "." + stub_sth.proxy_class.__name__
+        data["_name"] = stub_sth.proxy_class.__module__ + \
+            "." + stub_sth.proxy_class.__name__
         return data
     elif isinstance(stub_sth, instrument.StubAttr) or isinstance(stub_sth, instrument2.StubAttr):
         return dict(

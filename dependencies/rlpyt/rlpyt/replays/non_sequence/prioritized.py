@@ -9,7 +9,7 @@ from rlpyt.utils.buffer import torchify_buffer, numpify_buffer
 EPS = 1e-6
 
 SamplesFromReplayPri = namedarraytuple("SamplesFromReplayPri",
-    SamplesFromReplay._fields + ("is_weights",))
+                                       SamplesFromReplay._fields + ("is_weights",))
 
 
 class PrioritizedReplay:
@@ -22,7 +22,7 @@ class PrioritizedReplay:
     """
 
     def __init__(self, alpha=0.6, beta=0.4, default_priority=1, unique=False,
-            input_priorities=False, input_priority_shift=0, **kwargs):
+                 input_priorities=False, input_priority_shift=0, **kwargs):
         super().__init__(**kwargs)
         save__init__args(locals())
         self.init_priority_tree()
@@ -54,7 +54,8 @@ class PrioritizedReplay:
         else:
             priorities = None
         T, idxs = super().append_samples(samples)
-        self.priority_tree.advance(T, priorities=priorities)  # Progress priority_tree cursor.
+        # Progress priority_tree cursor.
+        self.priority_tree.advance(T, priorities=priorities)
         return T, idxs
 
     def sample_batch(self, batch_B):
@@ -63,7 +64,7 @@ class PrioritizedReplay:
         ``is_weights=priorities ** -beta``
         """
         (T_idxs, B_idxs), priorities = self.priority_tree.sample(batch_B,
-            unique=self.unique)
+                                                                 unique=self.unique)
         batch = self.extract_batch(T_idxs, B_idxs)
         is_weights = (1. / (priorities + EPS)) ** self.beta  # Unnormalized.
         is_weights /= max(is_weights)  # Normalize.
@@ -84,5 +85,5 @@ class PrioritizedReplayBuffer(PrioritizedReplay, NStepReturnBuffer):
 
 
 class AsyncPrioritizedReplayBuffer(AsyncReplayBufferMixin,
-        PrioritizedReplayBuffer):
+                                   PrioritizedReplayBuffer):
     pass

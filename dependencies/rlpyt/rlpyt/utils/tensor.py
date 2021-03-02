@@ -22,7 +22,7 @@ def to_onehot(indexes, num, dtype=None):
     if dtype is None:
         dtype = indexes.dtype
     onehot = torch.zeros(indexes.shape + (num,),
-        dtype=dtype, device=indexes.device)
+                         dtype=dtype, device=indexes.device)
     onehot.scatter_(-1, indexes.unsqueeze(-1).type(torch.long), 1)
     return onehot
 

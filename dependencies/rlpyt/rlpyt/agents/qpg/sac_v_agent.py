@@ -36,7 +36,7 @@ class SacAgent(BaseAgent):
             initial_model_state_dict=None,  # All models.
             action_squash=1.,  # Max magnitude (or None).
             pretrain_std=0.75,  # With squash 0.75 is near uniform.
-            ):
+    ):
         if model_kwargs is None:
             model_kwargs = dict(hidden_sizes=[256, 256])
         if q_model_kwargs is None:
@@ -44,22 +44,23 @@ class SacAgent(BaseAgent):
         if v_model_kwargs is None:
             v_model_kwargs = dict(hidden_sizes=[256, 256])
         super().__init__(ModelCls=ModelCls, model_kwargs=model_kwargs,
-            initial_model_state_dict=initial_model_state_dict)
+                         initial_model_state_dict=initial_model_state_dict)
         save__init__args(locals())
         self.min_itr_learn = 0  # Get from algo.
 
     def initialize(self, env_spaces, share_memory=False,
-            global_B=1, env_ranks=None):
+                   global_B=1, env_ranks=None):
         _initial_model_state_dict = self.initial_model_state_dict
-        self.initial_model_state_dict = None  # Don't let base agent try to load.
+        # Don't let base agent try to load.
+        self.initial_model_state_dict = None
         super().initialize(env_spaces, share_memory,
-            global_B=global_B, env_ranks=env_ranks)
+                           global_B=global_B, env_ranks=env_ranks)
         self.initial_model_state_dict = _initial_model_state_dict
         self.q1_model = self.QModelCls(**self.env_model_kwargs, **self.q_model_kwargs)
         self.q2_model = self.QModelCls(**self.env_model_kwargs, **self.q_model_kwargs)
         self.v_model = self.VModelCls(**self.env_model_kwargs, **self.v_model_kwargs)
         self.target_v_model = self.VModelCls(**self.env_model_kwargs,
-            **self.v_model_kwargs)
+                                             **self.v_model_kwargs)
         self.target_v_model.load_state_dict(self.v_model.state_dict())
         if self.initial_model_state_dict is not None:
             self.load_state_dict(self.initial_model_state_dict)
@@ -109,38 +110,39 @@ class SacAgent(BaseAgent):
 
     def q(self, observation, prev_action, prev_reward, action):
         model_inputs = buffer_to((observation, prev_action, prev_reward,
-            action), device=self.device)
+                                  action), device=self.device)
         q1 = self.q1_model(*model_inputs)
         q2 = self.q2_model(*model_inputs)
         return q1.cpu(), q2.cpu()
 
     def v(self, observation, prev_action, prev_reward):
         model_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         v = self.v_model(*model_inputs)
         return v.cpu()
 
     def pi(self, observation, prev_action, prev_reward):
         model_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         mean, log_std = self.model(*model_inputs)
         dist_info = DistInfoStd(mean=mean, log_std=log_std)
         action, log_pi = self.distribution.sample_loglikelihood(dist_info)
         # action = self.distribution.sample(dist_info)
         # log_pi = self.distribution.log_likelihood(action, dist_info)
         log_pi, dist_info = buffer_to((log_pi, dist_info), device="cpu")
-        return action, log_pi, dist_info  # Action stays on device for q models.
+        # Action stays on device for q models.
+        return action, log_pi, dist_info
 
     def target_v(self, observation, prev_action, prev_reward):
         model_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         target_v = self.target_v_model(*model_inputs)
         return target_v.cpu()
 
     @torch.no_grad()
     def step(self, observation, prev_action, prev_reward):
         model_inputs = buffer_to((observation, prev_action, prev_reward),
-            device=self.device)
+                                 device=self.device)
         mean, log_std = self.model(*model_inputs)
         dist_info = DistInfoStd(mean=mean, log_std=log_std)
         action = self.distribution.sample(dist_info)
@@ -154,7 +156,7 @@ class SacAgent(BaseAgent):
     @property
     def models(self):
         return Models(pi=self.model, q1=self.q1_model, q2=self.q2_model,
-            v=self.v_model)
+                      v=self.v_model)
 
     def pi_parameters(self):
         return self.model.parameters()

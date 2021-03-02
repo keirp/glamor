@@ -16,7 +16,7 @@ class GymSpaceWrapper:
     def __init__(self, space, null_value=0, name="obs", force_float32=True,
                  schemas=None):
         """Input ``space`` is a gym space instance.  
-        
+
         Input ``name`` governs naming of internal NamedTupleSchemas used to
         store Gym info.
         """
@@ -32,8 +32,8 @@ class GymSpaceWrapper:
                 nt = NamedTupleSchema(name, [k for k in space.spaces.keys()])
                 schemas[name] = nt  # Put at module level for pickle.
             elif not (isinstance(nt, NamedTupleSchema) and
-                    sorted(nt._fields) ==
-                    sorted([k for k in space.spaces.keys()])):
+                      sorted(nt._fields) ==
+                      sorted([k for k in space.spaces.keys()])):
                 raise ValueError(f"Name clash in schemas: {name}.")
             spaces = [GymSpaceWrapper(
                 space=v,
@@ -47,7 +47,7 @@ class GymSpaceWrapper:
         else:
             self.space = space
             self._dtype = np.float32 if (space.dtype == np.float64 and
-                force_float32) else None
+                                         force_float32) else None
 
     def sample(self):
         """Returns a single sample in a namedtuple (for composite) or numpy
@@ -126,7 +126,7 @@ class GymSpaceWrapper:
 def dict_to_nt(value, name, schemas):
     if isinstance(value, dict):
         values = {k: dict_to_nt(v, "_".join([name, k]))
-            for k, v in value.items()}
+                  for k, v in value.items()}
         return schemas[name](**values)
     if isinstance(value, np.ndarray) and value.dtype == np.float64:
         return np.asarray(value, dtype=np.float32)

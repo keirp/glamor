@@ -2,7 +2,7 @@
 import numpy as np
 
 from rlpyt.replays.non_sequence.n_step import (NStepReturnBuffer,
-    SamplesFromReplay)
+                                               SamplesFromReplay)
 from rlpyt.replays.non_sequence.uniform import UniformReplay
 from rlpyt.replays.non_sequence.prioritized import PrioritizedReplay
 from rlpyt.replays.async_ import AsyncReplayBufferMixin
@@ -11,7 +11,7 @@ from rlpyt.utils.buffer import torchify_buffer, buffer_from_example
 
 
 SamplesFromReplayTL = namedarraytuple("SamplesFromReplayTL",
-    SamplesFromReplay._fields + ("timeout", "timeout_n"))
+                                      SamplesFromReplay._fields + ("timeout", "timeout_n"))
 
 
 class NStepTimeLimitBuffer(NStepReturnBuffer):
@@ -32,9 +32,9 @@ class NStepTimeLimitBuffer(NStepReturnBuffer):
     def extract_batch(self, T_idxs, B_idxs):
         batch = super().extract_batch(T_idxs, B_idxs)
         batch = SamplesFromReplayTL(*batch,
-            timeout=self.samples.timeout[T_idxs, B_idxs],
-            timeout_n=self.samples_timeout_n[T_idxs, B_idxs],
-        )
+                                    timeout=self.samples.timeout[T_idxs, B_idxs],
+                                    timeout_n=self.samples_timeout_n[T_idxs, B_idxs],
+                                    )
         return torchify_buffer(batch)
 
     def compute_returns(self, T):
@@ -50,7 +50,7 @@ class NStepTimeLimitBuffer(NStepReturnBuffer):
             idxs = np.arange(t - nm1, t - nm1 + T) % T
             to_idxs = np.arange(t, t + T) % T
         self.samples_timeout_n[idxs] = (self.samples_done_n[idxs] *
-            self.samples.timeout[to_idxs])
+                                        self.samples.timeout[to_idxs])
 
 
 class TlUniformReplayBuffer(UniformReplay, NStepTimeLimitBuffer):
@@ -62,10 +62,10 @@ class TlPrioritizedReplayBuffer(PrioritizedReplay, NStepTimeLimitBuffer):
 
 
 class AsyncTlUniformReplayBuffer(AsyncReplayBufferMixin,
-        TlUniformReplayBuffer):
+                                 TlUniformReplayBuffer):
     pass
 
 
 class AsyncTlPrioritizedReplayBuffer(AsyncReplayBufferMixin,
-        TlPrioritizedReplayBuffer):
+                                     TlPrioritizedReplayBuffer):
     pass

@@ -49,10 +49,13 @@ def build_and_train(env_id="Hopper-v3", run_ID=0, cuda_idx=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--env_id', help='environment ID', default='Hopper-v3')
-    parser.add_argument('--run_ID', help='run identifier (logging)', type=int, default=0)
-    parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=None)
+    parser.add_argument(
+        '--run_ID', help='run identifier (logging)', type=int, default=0)
+    parser.add_argument('--cuda_idx', help='gpu to use ',
+                        type=int, default=None)
     args = parser.parse_args()
     build_and_train(
         env_id=args.env_id,

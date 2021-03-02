@@ -12,10 +12,10 @@ class RlAlgorithm:
     update_counter = 0
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples,
-            world_size=1, rank=0):
+                   world_size=1, rank=0):
         """
         Typically called in the runner during startup.
-        
+
         Args:
             agent: The learning agent instance.
             n_itr (int): Number of training loop iterations which will be run (e.g. corresponds to each call of ``optimize_agent()``)
@@ -28,7 +28,7 @@ class RlAlgorithm:
         raise NotImplementedError
 
     def async_initialize(self, agent, sampler_n_itr, batch_spec, mid_batch_reset,
-            examples, world_size=1):
+                         examples, world_size=1):
         """Called instead of ``initialize()`` in async runner (not needed unless
         using async runner). Should return async replay_buffer using shared
         memory."""

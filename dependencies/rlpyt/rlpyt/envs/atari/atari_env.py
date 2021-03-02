@@ -67,7 +67,8 @@ class AtariEnv(Env):
     def __init__(self,
                  game="pong",
                  frame_skip=4,  # Frames per step (>=1).
-                 num_img_obs=4,  # Number of (past) frames in observation (>=1).
+                 # Number of (past) frames in observation (>=1).
+                 num_img_obs=4,
                  clip_reward=True,
                  episodic_lives=True,
                  fire_on_reset=False,
@@ -80,9 +81,10 @@ class AtariEnv(Env):
         game_path = atari_py.get_game_path(game)
         if not os.path.exists(game_path):
             raise IOError("You asked for game {} but path {} does not "
-                " exist".format(game, game_path))
+                          " exist".format(game, game_path))
         self.ale = atari_py.ALEInterface()
-        self.ale.setFloat(b'repeat_action_probability', repeat_action_probability)
+        self.ale.setFloat(b'repeat_action_probability',
+                          repeat_action_probability)
         self.ale.loadROM(game_path)
 
         # Spaces
@@ -90,7 +92,7 @@ class AtariEnv(Env):
         self._action_space = IntBox(low=0, high=len(self._action_set))
         obs_shape = (num_img_obs, H, W)
         self._observation_space = IntBox(low=0, high=255, shape=obs_shape,
-            dtype="uint8")
+                                         dtype="uint8")
         self._max_frame = self.ale.getScreenGrayscale()
         self._raw_frame_1 = self._max_frame.copy()
         self._raw_frame_2 = self._max_frame.copy()
@@ -178,14 +180,14 @@ class AtariEnv(Env):
     def _life_reset(self):
         self.ale.act(0)  # (advance from lost life state)
         self._lives = self.ale.lives()
-        
+
     def fire_and_up(self):
         if self._has_fire:
             # TODO: for sticky actions, make sure fire is actually pressed
             self.ale.act(1)  # (e.g. needed in Breakout, not sure what others)
         if self._has_up:
-            self.ale.act(2)  # (not sure if this is necessary, saw it somewhere)
-
+            # (not sure if this is necessary, saw it somewhere)
+            self.ale.act(2)
 
     ###########################################################################
     # Properties

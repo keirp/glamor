@@ -8,7 +8,8 @@ from rlpyt.spaces.gym_wrapper import GymSpaceWrapper
 
 class TestGymWrapper(unittest.TestCase):
     def test_seed(self):
-        space = GymSpaceWrapper(gym.spaces.Box(low=np.zeros(1), high=np.ones(1)))
+        space = GymSpaceWrapper(gym.spaces.Box(
+            low=np.zeros(1), high=np.ones(1)))
         space.seed(0)
         sample_1 = space.sample()
         space.seed(0)

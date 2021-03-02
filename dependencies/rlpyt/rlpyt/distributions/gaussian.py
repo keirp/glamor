@@ -33,7 +33,7 @@ class Gaussian(Distribution):
             min_std=None,
             max_std=None,
             squash=None,  # None or > 0
-            ):
+    ):
         """Saves input arguments."""
         self._dim = dim
         self.set_std(std)
@@ -62,9 +62,9 @@ class Gaussian(Distribution):
             new_log_std = new_dist_info.log_std
             if self.min_std is not None or self.max_std is not None:
                 old_log_std = torch.clamp(old_log_std, min=self.min_log_std,
-                    max=self.max_log_std)
+                                          max=self.max_log_std)
                 new_log_std = torch.clamp(new_log_std, min=self.min_log_std,
-                    max=self.max_log_std)
+                                          max=self.max_log_std)
             old_std = torch.exp(old_log_std)
             new_std = torch.exp(new_log_std)
             num += old_std ** 2 - new_std ** 2
@@ -88,13 +88,14 @@ class Gaussian(Distribution):
             log_std = dist_info.log_std
             if self.min_log_std is not None or self.max_log_std is not None:
                 log_std = torch.clamp(log_std, min=self.min_log_std,
-                    max=self.max_log_std)
+                                      max=self.max_log_std)
         else:
             # shape = dist_info.mean.shape[:-1]
             # log_std = torch.log(self.std).repeat(*shape, 1)
-            log_std = torch.log(self.std)  # Shape broadcast in following formula.
+            # Shape broadcast in following formula.
+            log_std = torch.log(self.std)
         return torch.sum(log_std + math.log(math.sqrt(2 * math.pi * math.e)),
-            dim=-1)
+                         dim=-1)
 
     def perplexity(self, dist_info):
         return torch.exp(self.entropy(dist_info))
@@ -116,7 +117,7 @@ class Gaussian(Distribution):
             log_std = dist_info.log_std
             if self.min_log_std is not None or self.max_log_std is not None:
                 log_std = torch.clamp(log_std, min=self.min_log_std,
-                    max=self.max_log_std)
+                                      max=self.max_log_std)
             std = torch.exp(log_std)
         else:
             std, log_std = self.std, torch.log(self.std)
@@ -126,7 +127,7 @@ class Gaussian(Distribution):
         #     x = torch.atanh(x / self.squash)  # No torch implementation.
         z = (x - mean) / (std + EPS)
         logli = -(torch.sum(log_std + 0.5 * z ** 2, dim=-1) +
-            0.5 * self.dim * math.log(2 * math.pi))
+                  0.5 * self.dim * math.log(2 * math.pi))
         if self.squash is not None:
             logli -= torch.sum(
                 torch.log(self.squash * (1 - torch.tanh(x) ** 2) + EPS),
@@ -146,9 +147,11 @@ class Gaussian(Distribution):
         and then restores squashing and applies it to the sample before output.
         """
         squash = self.squash
-        self.squash = None  # Temporarily turn OFF, raw sample into log_likelihood.
+        # Temporarily turn OFF, raw sample into log_likelihood.
+        self.squash = None
         sample = self.sample(dist_info)
-        self.squash = squash  # Turn it back ON, squash correction in log_likelihood.
+        # Turn it back ON, squash correction in log_likelihood.
+        self.squash = squash
         logli = self.log_likelihood(sample, dist_info)
         if squash is not None:
             sample = squash * torch.tanh(sample)
@@ -172,7 +175,6 @@ class Gaussian(Distribution):
     #             dim=-1)
     #     return sample, logli
 
-
         # squash = self.squash
         # self.squash = None  # Temporarily turn OFF.
         # sample = self.sample(dist_info)
@@ -193,7 +195,7 @@ class Gaussian(Distribution):
             log_std = dist_info.log_std
             if self.min_log_std is not None or self.max_log_std is not None:
                 log_std = torch.clamp(log_std, min=self.min_log_std,
-                    max=self.max_log_std)
+                                      max=self.max_log_std)
             std = torch.exp(log_std)
         else:
             # shape = mean.shape[:-1]
@@ -201,7 +203,8 @@ class Gaussian(Distribution):
             std = self.std.to(mean.device)
         # For reparameterization trick: mean + std * N(0, 1)
         # (Also this gets noise on same device as mean.)
-        noise = std * torch.normal(torch.zeros_like(mean), torch.ones_like(mean))
+        noise = std * torch.normal(torch.zeros_like(mean),
+                                   torch.ones_like(mean))
         # noise = torch.normal(mean=0, std=std)
         if self.noise_clip is not None:
             noise = torch.clamp(noise, -self.noise_clip, self.noise_clip)

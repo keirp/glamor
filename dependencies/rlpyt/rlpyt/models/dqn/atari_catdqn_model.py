@@ -37,7 +37,7 @@ class AtariCatDqnModel(torch.nn.Module):
             kernel_sizes=None,
             strides=None,
             paddings=None,
-            ):
+    ):
         """Instantiates the neural network according to arguments; network defaults
         stored within this method."""
         super().__init__()
@@ -54,10 +54,10 @@ class AtariCatDqnModel(torch.nn.Module):
         conv_out_size = self.conv.conv_out_size(h, w)
         if dueling:
             self.head = DistributionalDuelingHeadModel(conv_out_size, fc_sizes,
-                output_size=output_size, n_atoms=n_atoms)
+                                                       output_size=output_size, n_atoms=n_atoms)
         else:
             self.head = DistributionalHeadModel(conv_out_size, fc_sizes,
-                output_size=output_size, n_atoms=n_atoms)
+                                                output_size=output_size, n_atoms=n_atoms)
 
     def forward(self, observation, prev_action, prev_reward):
         """Returns the probability masses ``num_atoms x num_actions`` for the Q-values
@@ -68,7 +68,8 @@ class AtariCatDqnModel(torch.nn.Module):
         # Infer (presence of) leading dimensions: [T,B], [B], or [].
         lead_dim, T, B, img_shape = infer_leading_dims(img, 3)
 
-        conv_out = self.conv(img.view(T * B, *img_shape))  # Fold if T dimension.
+        # Fold if T dimension.
+        conv_out = self.conv(img.view(T * B, *img_shape))
         p = self.head(conv_out.view(T * B, -1))
         p = F.softmax(p, dim=-1)
 

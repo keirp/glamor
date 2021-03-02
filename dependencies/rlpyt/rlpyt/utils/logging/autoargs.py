@@ -107,7 +107,8 @@ def new_from_args(_):
                         params[arg_name] = val
                     if not silent:
                         print(colorize(
-                            "using argument %s with value %s" % (arg_name, val),
+                            "using argument %s with value %s" % (
+                                arg_name, val),
                             "yellow"))
         return cls(*args, **params)
     return _new_from_args
@@ -136,7 +137,8 @@ def get_all_parameters(cls, parsed_args):
         if spec.defaults is None:
             arg_defaults = {}
         else:
-            arg_defaults = dict(list(zip(spec.args[::-1], spec.defaults[::-1])))
+            arg_defaults = dict(
+                list(zip(spec.args[::-1], spec.defaults[::-1])))
     else:
         arg_defaults = {}
     all_params = {}

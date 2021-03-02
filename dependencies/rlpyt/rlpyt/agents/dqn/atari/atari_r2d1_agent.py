@@ -13,4 +13,3 @@ class AtariR2d1AlternatingAgent(AtariMixin, R2d1AlternatingAgent):
 
     def __init__(self, ModelCls=AtariR2d1Model, **kwargs):
         super().__init__(ModelCls=ModelCls, **kwargs)
-    

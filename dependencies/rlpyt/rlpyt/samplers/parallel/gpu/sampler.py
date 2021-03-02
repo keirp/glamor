@@ -5,13 +5,13 @@ from rlpyt.agents.base import AgentInputs
 from rlpyt.samplers.parallel.base import ParallelSamplerBase
 from rlpyt.samplers.parallel.gpu.action_server import ActionServer
 from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector,
-    GpuEvalCollector)
+                                                    GpuEvalCollector)
 from rlpyt.utils.collections import namedarraytuple, AttrDict
 from rlpyt.utils.synchronize import drain_queue
 from rlpyt.utils.buffer import buffer_from_example, torchify_buffer
 
 StepBuffer = namedarraytuple("StepBuffer",
-    ["observation", "action", "reward", "done", "agent_info"])
+                             ["observation", "action", "reward", "done", "agent_info"])
 
 
 class GpuSamplerBase(ParallelSamplerBase):
@@ -37,10 +37,10 @@ class GpuSamplerBase(ParallelSamplerBase):
     gpu = True
 
     def __init__(self, *args, CollectorCls=GpuResetCollector,
-            eval_CollectorCls=GpuEvalCollector, **kwargs):
+                 eval_CollectorCls=GpuEvalCollector, **kwargs):
         # e.g. or use GpuWaitResetCollector, etc...
         super().__init__(*args, CollectorCls=CollectorCls,
-            eval_CollectorCls=eval_CollectorCls, **kwargs)
+                         eval_CollectorCls=eval_CollectorCls, **kwargs)
 
     def obtain_samples(self, itr):
         """Signals worker to begin environment step execution loop, and drops
@@ -67,7 +67,7 @@ class GpuSamplerBase(ParallelSamplerBase):
         traj_infos = self.serve_actions_evaluation(itr)
         self.ctrl.barrier_out.wait()
         traj_infos.extend(drain_queue(self.eval_traj_infos_queue,
-            n_sentinel=self.n_worker))  # Block until all finish submitting.
+                                      n_sentinel=self.n_worker))  # Block until all finish submitting.
         self.ctrl.do_eval.value = False
         return traj_infos
 
@@ -76,7 +76,7 @@ class GpuSamplerBase(ParallelSamplerBase):
         agent functions (training and sampling) happen in the master process,
         presumably on GPU."""
         agent.initialize(env.spaces, share_memory=False,  # No share memory.
-            global_B=global_B, env_ranks=env_ranks)
+                         global_B=global_B, env_ranks=env_ranks)
         self.agent = agent
 
     def _build_buffers(self, *args, **kwargs):
@@ -84,7 +84,7 @@ class GpuSamplerBase(ParallelSamplerBase):
         self.step_buffer_pyt, self.step_buffer_np = build_step_buffer(
             examples, self.batch_spec.B)
         self.agent_inputs = AgentInputs(self.step_buffer_pyt.observation,
-            self.step_buffer_pyt.action, self.step_buffer_pyt.reward)
+                                        self.step_buffer_pyt.action, self.step_buffer_pyt.reward)
         if self.eval_n_envs > 0:
             self.eval_step_buffer_pyt, self.eval_step_buffer_np = \
                 build_step_buffer(examples, self.eval_n_envs)
@@ -107,7 +107,7 @@ class GpuSamplerBase(ParallelSamplerBase):
 
     def _assemble_workers_kwargs(self, affinity, seed, n_envs_list):
         workers_kwargs = super()._assemble_workers_kwargs(affinity, seed,
-            n_envs_list)
+                                                          n_envs_list)
         i_env = 0
         for rank, w_kwargs in enumerate(workers_kwargs):
             n_envs = n_envs_list[rank]
@@ -120,7 +120,7 @@ class GpuSamplerBase(ParallelSamplerBase):
             w_kwargs["step_buffer_np"] = self.step_buffer_np[slice_B]
             if self.eval_n_envs > 0:
                 eval_slice_B = slice(self.eval_n_envs_per * rank,
-                    self.eval_n_envs_per * (rank + 1))
+                                     self.eval_n_envs_per * (rank + 1))
                 w_kwargs["eval_step_buffer_np"] = \
                     self.eval_step_buffer_np[eval_slice_B]
             i_env += n_envs
@@ -133,7 +133,7 @@ class GpuSampler(ActionServer, GpuSamplerBase):
 
 def build_step_buffer(examples, B):
     step_bufs = {k: buffer_from_example(examples[k], B, share_memory=True)
-        for k in ["observation", "action", "reward", "done", "agent_info"]}
+                 for k in ["observation", "action", "reward", "done", "agent_info"]}
     step_buffer_np = StepBuffer(**step_bufs)
     step_buffer_pyt = torchify_buffer(step_buffer_np)
     return step_buffer_pyt, step_buffer_np

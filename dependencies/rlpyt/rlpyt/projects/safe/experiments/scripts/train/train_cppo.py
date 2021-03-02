@@ -20,7 +20,7 @@ def build_and_train(
         log_dir="test",
         run_ID="0",
         config_key="LSTM",
-        ):
+):
     affinity = affinity_from_code(slot_affinity_code)
     config = configs[config_key]
     variant = load_variant(log_dir)

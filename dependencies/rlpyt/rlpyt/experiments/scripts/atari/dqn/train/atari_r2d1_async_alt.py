@@ -31,7 +31,7 @@ def build_and_train(slot_affinity_code, log_dir, run_ID, config_key):
     )
     algo = R2D1(optim_kwargs=config["optim"], **config["algo"])
     agent = AtariR2d1AlternatingAgent(model_kwargs=config["model"],
-        **config["agent"])
+                                      **config["agent"])
     runner = AsyncRlEval(
         algo=algo,
         agent=agent,

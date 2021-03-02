@@ -45,5 +45,3 @@ config = copy.deepcopy(config)
 config["sampler"]["batch_T"] = 5
 config["algo"]["updates_per_sync"] = 1
 configs["async_serial"] = config
-
-

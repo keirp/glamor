@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from rlpyt.algos.base import RlAlgorithm
 from rlpyt.algos.utils import (discount_return, generalized_advantage_estimation,
-    valid_from_done)
+                               valid_from_done)
 
 # Convention: traj_info fields CamelCase, opt_info fields lowerCamelCase
 OptInfo = namedtuple("OptInfo", ["loss", "gradNorm", "entropy", "perplexity"])
@@ -22,13 +22,13 @@ class PolicyGradientAlgo(RlAlgorithm):
     opt_info_fields = tuple(f for f in OptInfo._fields)  # copy
 
     def initialize(self, agent, n_itr, batch_spec, mid_batch_reset=False,
-            examples=None, world_size=1, rank=0):
+                   examples=None, world_size=1, rank=0):
         """
         Build the torch optimizer and store other input attributes. Params
         ``batch_spec`` and ``examples`` are unused.
         """
         self.optimizer = self.OptimCls(agent.parameters(),
-            lr=self.learning_rate, **self.optim_kwargs)
+                                       lr=self.learning_rate, **self.optim_kwargs)
         if self.initial_optim_state_dict is not None:
             self.optimizer.load_state_dict(self.initial_optim_state_dict)
         self.agent = agent
@@ -47,7 +47,7 @@ class PolicyGradientAlgo(RlAlgorithm):
         normalize advantages.
         """
         reward, done, value, bv = (samples.env.reward, samples.env.done,
-            samples.agent.agent_info.value, samples.agent.bootstrap_value)
+                                   samples.agent.agent_info.value, samples.agent.bootstrap_value)
         done = done.type(reward.dtype)
 
         if self.gae_lambda == 1:  # GAE reduces to empirical discounted.
@@ -58,7 +58,8 @@ class PolicyGradientAlgo(RlAlgorithm):
                 reward, value, done, bv, self.discount, self.gae_lambda)
 
         if not self.mid_batch_reset or self.agent.recurrent:
-            valid = valid_from_done(done)  # Recurrent: no reset during training.
+            # Recurrent: no reset during training.
+            valid = valid_from_done(done)
         else:
             valid = None  # OR torch.ones_like(done)
 
